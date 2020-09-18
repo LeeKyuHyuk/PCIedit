@@ -237,7 +237,7 @@ BOOL ReadPCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue
 	BOOL bRet = FALSE;
 	DWORD dwBytes;
 	PHYMEM_IOPR pp;//8 bytes
-	DWORD io_port;
+	// DWORD io_port;
 
 
 	pp.io_port = 0xCF8;
