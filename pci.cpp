@@ -4,18 +4,21 @@ Ver: 1.0
 Date: 2019/11/30
 --*/
 
+#include <iostream>
 #include <windows.h>
 #include <winioctl.h>
 #include "pci.h"
 
+using namespace std;
+
 HANDLE hDriver = INVALID_HANDLE_VALUE;
 
-BOOL InstallDriver(PCSTR pszDriverPath, PCSTR pszDriverName);
-BOOL RemoveDriver(PCSTR pszDriverName);
-BOOL StartDriver(PCSTR pszDriverName);
-BOOL StopDriver(PCSTR pszDriverName);
+BOOL InstallDriver(LPWSTR pszDriverPath, LPWSTR pszDriverName);
+BOOL RemoveDriver(LPWSTR pszDriverName);
+BOOL StartDriver(LPWSTR pszDriverName);
+BOOL StopDriver(LPWSTR pszDriverName);
 
-BOOL InstallDriver(PCSTR pszDriverPath, PCSTR pszDriverName)
+BOOL InstallDriver(LPWSTR pszDriverPath, LPWSTR pszDriverName)
 {
 	SC_HANDLE hSCManager;
 	SC_HANDLE hService;
@@ -29,13 +32,13 @@ BOOL InstallDriver(PCSTR pszDriverPath, PCSTR pszDriverName)
 	{
 		//Install the driver
 		hService = CreateService(hSCManager,
-			(LPWSTR)pszDriverName,
-			(LPWSTR)pszDriverName,
+			pszDriverName,
+			pszDriverName,
 			SERVICE_ALL_ACCESS,
 			SERVICE_KERNEL_DRIVER,
 			SERVICE_DEMAND_START,
 			SERVICE_ERROR_NORMAL,
-			(LPWSTR)pszDriverPath,
+			pszDriverPath,
 			NULL,
 			NULL,
 			NULL,
@@ -55,7 +58,7 @@ BOOL InstallDriver(PCSTR pszDriverPath, PCSTR pszDriverName)
 	return TRUE;
 }
 
-BOOL RemoveDriver(PCSTR pszDriverName)
+BOOL RemoveDriver(LPWSTR pszDriverName)
 {
 	SC_HANDLE hSCManager;
 	SC_HANDLE hService;
@@ -67,7 +70,7 @@ BOOL RemoveDriver(PCSTR pszDriverName)
 
 	if (hSCManager)
 	{
-		hService = OpenService(hSCManager, (LPWSTR)pszDriverName, SERVICE_ALL_ACCESS);
+		hService = OpenService(hSCManager, pszDriverName, SERVICE_ALL_ACCESS);
 
 		CloseServiceHandle(hSCManager);
 
@@ -82,11 +85,11 @@ BOOL RemoveDriver(PCSTR pszDriverName)
 	}
 	else
 		return FALSE;
-
+	cout << "[Debug] RemoveDriver() : " << bResult << endl;
 	return bResult;
 }
 
-BOOL StartDriver(PCSTR pszDriverName)
+BOOL StartDriver(LPWSTR pszDriverName)
 {
 	SC_HANDLE hSCManager;
 	SC_HANDLE hService;
@@ -96,7 +99,7 @@ BOOL StartDriver(PCSTR pszDriverName)
 
 	if (hSCManager)
 	{
-		hService = OpenService(hSCManager, (LPWSTR)pszDriverName, SERVICE_ALL_ACCESS);
+		hService = OpenService(hSCManager, pszDriverName, SERVICE_ALL_ACCESS);
 
 		CloseServiceHandle(hSCManager);
 
@@ -120,8 +123,9 @@ BOOL StartDriver(PCSTR pszDriverName)
 	return bResult;
 }
 
-BOOL StopDriver(PCSTR pszDriverName)
+BOOL StopDriver(LPWSTR pszDriverName)
 {
+	cout << "[Debug] StopDriver() Start!" << endl;
 	SC_HANDLE hSCManager;
 	SC_HANDLE hService;
 	SERVICE_STATUS ServiceStatus;
@@ -131,7 +135,7 @@ BOOL StopDriver(PCSTR pszDriverName)
 
 	if (hSCManager)
 	{
-		hService = OpenService(hSCManager, (LPWSTR)pszDriverName, SERVICE_ALL_ACCESS);
+		hService = OpenService(hSCManager, pszDriverName, SERVICE_ALL_ACCESS);
 
 		CloseServiceHandle(hSCManager);
 
@@ -147,26 +151,8 @@ BOOL StopDriver(PCSTR pszDriverName)
 	else
 		return FALSE;
 
+	cout << "[Debug] StopDriver() : " << bResult << endl;
 	return bResult;
-}
-
-
-//get driver(chipsec_hlpr.sys) full path
-static BOOL GetDriverPath(PSTR szDriverPath)
-{
-	PSTR pszSlash;
-
-	if (!GetModuleFileName(GetModuleHandle(NULL), (LPWSTR)szDriverPath, MAX_PATH))
-		return FALSE;
-
-	pszSlash = strrchr(szDriverPath, '\\');
-
-	if (pszSlash)
-		pszSlash[1] = '\0';
-	else
-		return FALSE;
-
-	return TRUE;
 }
 
 BYTE LoadPhyMemDriverMY()
@@ -178,7 +164,7 @@ BYTE LoadPhyMemDriverMY()
 BOOL LoadPhyMemDriver()
 {
 	BOOL bResult;
-	CHAR szDriverPath[MAX_PATH];
+	// CHAR szDriverPath[MAX_PATH];
 
 	hDriver = CreateFile(L"\\\\.\\rwdrv",
 		GENERIC_READ | GENERIC_WRITE,
@@ -191,15 +177,17 @@ BOOL LoadPhyMemDriver()
 	//If the driver is not running, install it
 	if (hDriver == INVALID_HANDLE_VALUE)
 	{
-		GetDriverPath(szDriverPath);
-		strcat_s(szDriverPath, "rwdrv.sys");
-
-		bResult = InstallDriver(szDriverPath, "PHYMEM");
+		TCHAR programpath[MAX_PATH];
+		GetCurrentDirectory(_MAX_PATH, programpath);
+		wcscat_s(programpath, L"\\RwDrv.sys");
+		printf("[DEBUG] %ws\n", programpath);
+		LPWSTR b = const_cast<LPTSTR>(TEXT("PHYMEM"));
+		bResult = InstallDriver(programpath, b);
 
 		if (!bResult)
 			return FALSE;
 
-		bResult = StartDriver("PHYMEM");
+		bResult = StartDriver(b);
 
 		if (!bResult)
 			return FALSE;
@@ -228,7 +216,7 @@ VOID UnloadPhyMemDriver()
 		hDriver = INVALID_HANDLE_VALUE;
 	}
 
-	RemoveDriver("rwdrv");
+	RemoveDriver(const_cast<LPTSTR>(TEXT("PHYMEM")));
 }
 
 //read pci configuration
