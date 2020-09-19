@@ -1,5 +1,3 @@
-#ifndef __PHYMEM_H
-#define __PHYMEM_H
 #include <Windows.h>
 
 typedef struct tagPHYMEM_IOPR
@@ -16,5 +14,3 @@ VOID UnloadPhyMemDriver();
 //access PCI bus
 BOOL ReadPCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue);
 BOOL WritePCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, DWORD Value);
-
-#endif	//__PHYMEM_H

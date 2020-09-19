@@ -277,4 +277,3 @@ BOOL WritePCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, DWORD Value
 	else
 		return FALSE;
 }
-

@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// 한국어(대한민국) resources
+// Korean (Korea) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
@@ -52,7 +52,7 @@ END
 
 IDR_BINARY1             BINARY                  "RwDrv.sys"
 
-#endif    // 한국어(대한민국) resources
+#endif    // Korean (Korea) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
