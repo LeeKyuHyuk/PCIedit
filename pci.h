@@ -1,14 +1,12 @@
-#include <Windows.h>
+#pragma once
 
-typedef struct tagPHYMEM_IOPR
-{
-	DWORD io_port;		//
-	DWORD value;		//
-} PHYMEM_IOPR, * PPHYMEM_IOPR;
+BOOL InstallDriver(LPWSTR pszDriverPath, LPWSTR pszDriverName);
+BOOL RemoveDriver(LPWSTR pszDriverName);
+BOOL StartDriver(LPWSTR pszDriverName);
+BOOL StopDriver(LPWSTR pszDriverName);
 
 //driver initialize
 BOOL LoadPhyMemDriver();
-BYTE LoadPhyMemDriverMY();
 VOID UnloadPhyMemDriver();
 
 //access PCI bus

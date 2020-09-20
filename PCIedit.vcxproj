@@ -148,9 +148,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="pci.cpp" />
-    <ClCompile Include="PCIedit.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="main.h" />
     <ClInclude Include="pci.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
