@@ -10,7 +10,6 @@ using namespace std;
 
 int main() {
 	int bus = -1, device = -1, function = -1;
-	DWORD dev_ven[2];
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	string command = "";
 
@@ -136,9 +135,72 @@ BOOL ExtractResource(uint16_t resource_id, LPCWSTR output_filename, LPCWSTR reso
 }
 
 void PrintRegisters(int bus, int device, int function) {
-	DWORD dev_ven[2];
-	ReadPciDword(bus, device, function, 0, &dev_ven);
-	printf("Device ID 0x%04X, Vendor ID 0x%04X\n", HIWORD(dev_ven[1]), LOWORD(dev_ven[1]));
-	ReadPciDword(bus, device, function, sizeof(DWORD), &dev_ven);
-	printf("Status 0x%04X, Command 0x%04X\n", HIWORD(dev_ven[1]), LOWORD(dev_ven[1]));
+	DWORD data[2]; /* [0] : IO Port, [1] : Value */
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|          [00h] Type 0 Configuration Space Header         |" << endl;
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|          Device ID         |          Vendor ID          |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 0, &data);
+	printf("|            0x%04X          |            0x%04X           |\n", HIWORD(data[1]), LOWORD(data[1]));
+	cout << "|----------------------------|-----------------------------|" << endl;
+	cout << "|           Status           |           Command           |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 1, &data);
+	printf("|            0x%04X          |            0x%04X           |\n", HIWORD(data[1]), LOWORD(data[1]));
+	cout << "|----------------------------|-----------------------------|" << endl;
+	cout << "|         Class Code         |          Revision ID        |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 2, &data);
+	printf("|          0x%06X          |             0x%02X            |\n", data[1] >> 8, LOBYTE(data[1]));
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|  BIST  | Header Type  | Lantency Timer | Cache Line Size |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 3, &data);
+	printf ("|  0x%02X  |     0x%02X     |      0x%02X      |       0x%02X      |\n", HIBYTE(HIWORD(data[1])), LOBYTE(HIWORD(data[1])), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                  Base Address Register 0                 |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 4, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                  Base Address Register 1                 |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 5, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                  Base Address Register 2                 |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 6, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                  Base Address Register 3                 |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 7, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                  Base Address Register 4                 |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 8, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                  Base Address Register 5                 |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 9, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                    Cardbus CIS Pointer                   |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 10, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|        Subsystem ID        |      Subsystem Vendor ID    |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 11, &data);
+	printf("|            0x%04X          |            0x%04X           |\n", HIWORD(data[1]), LOWORD(data[1]));
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                 Expansion ROM Base Address               |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 12, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|          Reserved          |     Capabilities Pointer    |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 13, &data);
+	printf("|          0x%06X          |             0x%02X            |\n", data[1] >> 8, LOBYTE(data[1]));
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "|                          Reserved                        |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 14, &data);
+	printf("|                         0x%08X                       |\n", data[1]);
+	cout << "|----------------------------------------------------------|" << endl;
+	cout << "| Max Latency | Min Grant | Interrupt Pin | Interrupt Line |" << endl;
+	ReadPciDword(bus, device, function, sizeof(DWORD) * 15, &data);
+	printf("|     0x%02X    |    0x%02X   |      0x%02X     |      0x%02X      |\n", HIBYTE(HIWORD(data[1])), LOBYTE(HIWORD(data[1])), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
+	cout << "|----------------------------------------------------------|" << endl;
 }
