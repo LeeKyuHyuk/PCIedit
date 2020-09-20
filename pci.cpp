@@ -3,11 +3,11 @@
 
 #include "pci.h"
 
-typedef struct PciData
+typedef struct PciDataDword
 {
 	DWORD io_port;
 	DWORD value;
-} PciData;
+} PciDataDword;
 
 HANDLE driverHandle = INVALID_HANDLE_VALUE;
 
@@ -203,12 +203,11 @@ VOID UnloadPhyMemDriver()
 	RemoveDriver(const_cast<LPTSTR>(TEXT("PHYMEM")));
 }
 
-//read pci configuration
-BOOL ReadPCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue)
+BOOL ReadPciDword(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue)
 {
 	BOOL bRet = FALSE;
 	DWORD dwBytes;
-	PciData pp;//8 bytes
+	PciDataDword pp;//8 bytes
 	// DWORD io_port;
 
 	pp.io_port = 0xCF8;
@@ -223,11 +222,11 @@ BOOL ReadPCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue
 			DWORD        nOutBufferSize,
 			LPDWORD      lpBytesReturned,
 			LPOVERLAPPED lpOverlapped*/
-		bRet = DeviceIoControl(driverHandle, 0x222824, &pp, sizeof(PciData), pValue, 8, &dwBytes, NULL);//write dw
+		bRet = DeviceIoControl(driverHandle, 0x222824, &pp, sizeof(PciDataDword), pValue, 8, &dwBytes, NULL);//write dw
 		pp.io_port = 0xCFC + (regOff & 0x03);
 		pp.value = 0;
 		if (bRet)
-			bRet = DeviceIoControl(driverHandle, 0x222820, &pp, sizeof(PciData), pValue, 8, &dwBytes, NULL);//read dw
+			bRet = DeviceIoControl(driverHandle, 0x222820, &pp, sizeof(PciDataDword), pValue, 8, &dwBytes, NULL);//read dw
 	}
 
 	if (bRet)
@@ -237,22 +236,22 @@ BOOL ReadPCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue
 }
 
 //write pci configuration
-BOOL WritePCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, DWORD Value)
+BOOL WritePciDword(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, DWORD Value)
 {
 	BOOL bRet = FALSE;
 	DWORD dwBytes;
-	PciData pp;//8 bytes
+	PciDataDword pp;//8 bytes
 
 	pp.io_port = 0xCF8;
 	pp.value = (busNum << 16) | (devNum << 11) | (funcNum << 8) | (regOff & 0xFC) | 0x80000000;
 
 	if (driverHandle != INVALID_HANDLE_VALUE)
 	{
-		bRet = DeviceIoControl(driverHandle, 0x222824, &pp, sizeof(PciData), &pp, sizeof(PciData), &dwBytes, NULL);//write dw
+		bRet = DeviceIoControl(driverHandle, 0x222824, &pp, sizeof(PciDataDword), &pp, sizeof(PciDataDword), &dwBytes, NULL);//write dw
 		pp.io_port = 0xCFC + (regOff & 0x03);
 		pp.value = Value;
 		if (bRet)
-			bRet = DeviceIoControl(driverHandle, 0x222824, &pp, sizeof(PciData), &pp, sizeof(PciData), &dwBytes, NULL);//write dw
+			bRet = DeviceIoControl(driverHandle, 0x222824, &pp, sizeof(PciDataDword), &pp, sizeof(PciDataDword), &dwBytes, NULL);//write dw
 	}
 
 	if (bRet)

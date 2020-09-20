@@ -10,5 +10,5 @@ BOOL LoadPhyMemDriver();
 VOID UnloadPhyMemDriver();
 
 //access PCI bus
-BOOL ReadPCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue);
-BOOL WritePCIDW(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, DWORD Value);
+BOOL ReadPciDword(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, PVOID pValue);
+BOOL WritePciDword(WORD busNum, WORD devNum, WORD funcNum, WORD regOff, DWORD Value);

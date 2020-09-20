@@ -26,7 +26,7 @@ int main() {
 	}
 
 	/* Select PCI Device (Input Bus, Device, Function) */
-	Title();	
+	Title();
 	do {
 		cout << "[PCIedit] >> ";
 		cin >> bus >> device >> function;
@@ -40,17 +40,19 @@ int main() {
 
 	/* PCIedit Colsone */
 	while (TRUE) {
-		ReadPCIDW(bus, device, function, 0, &dev_ven);
-		printf("Vendor ID 0x%x, Device ID 0x%x\n", LOWORD(dev_ven[1]), HIWORD(dev_ven[1]));
 		//WritePCIDW(bus, dev, func, 0, 0x12345678);
 
 		cout << "[PCIedit] >> ";
 		cin >> command;
 		try {
-			if (strcmp(command.c_str(), "q") == 0 || strcmp(command.c_str(), "Q") == 0)
-				break;
 			if (strcmp(command.c_str(), "h") == 0 || strcmp(command.c_str(), "H") == 0)
 				Help();
+			else if (strcmp(command.c_str(), "r") == 0 || strcmp(command.c_str(), "R") == 0)
+				PrintRegisters(bus, device, function);
+			else if (strcmp(command.c_str(), "q") == 0 || strcmp(command.c_str(), "Q") == 0)
+				break;
+			else
+				ErrorMessage(console, "Invalid input.");
 		}
 		catch (...) {
 			ErrorMessage(console, "Invalid input.");
@@ -131,4 +133,12 @@ BOOL ExtractResource(uint16_t resource_id, LPCWSTR output_filename, LPCWSTR reso
 	}
 	catch (...) {}
 	return false;
+}
+
+void PrintRegisters(int bus, int device, int function) {
+	DWORD dev_ven[2];
+	ReadPciDword(bus, device, function, 0, &dev_ven);
+	printf("Device ID 0x%04X, Vendor ID 0x%04X\n", HIWORD(dev_ven[1]), LOWORD(dev_ven[1]));
+	ReadPciDword(bus, device, function, sizeof(DWORD), &dev_ven);
+	printf("Status 0x%04X, Command 0x%04X\n", HIWORD(dev_ven[1]), LOWORD(dev_ven[1]));
 }
