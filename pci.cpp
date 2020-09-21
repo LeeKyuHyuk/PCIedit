@@ -3,8 +3,7 @@
 
 #include "pci.h"
 
-typedef struct PciDataDword
-{
+typedef struct PciDataDword {
 	DWORD io_port;
 	DWORD value;
 } PciDataDword;
