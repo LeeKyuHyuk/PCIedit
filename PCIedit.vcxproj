@@ -147,10 +147,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="capability.cpp" />
     <ClCompile Include="pci.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="capability.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="pci.h" />
     <ClInclude Include="resource.h" />
