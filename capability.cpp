@@ -1,5 +1,8 @@
 #include <Windows.h>
+#include <bitset>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "capability.h"
 #include "pci.h"
@@ -69,10 +72,19 @@ typedef struct PciPowerManagementInterfaceCapability {
 	BYTE data;
 } PciPowerManagementInterfaceCapability;
 
+vector<BYTE> capability_order;
+
 CommonConfigurationSpace common_configuration_space = { 0, };
 Type0ConfigurationSpaceHeader type_0_configuration_space_header = { 0, };
 Type1ConfigurationSpaceHeader type_1_configuration_space_header = { 0, };
 PciPowerManagementInterfaceCapability pci_power_management_interface_capability = { 0, };
+
+string ReverseString(const string str) {
+	string reverse;
+	for (int index = 0; index < str.length(); index++)
+		reverse += str.substr(str.length() - index - 1, 1);
+	return reverse;
+}
 
 void PrintRegisters(int bus, int device, int function) {
 	DWORD data[2]; /* [0] : IO Port, [1] : Value */
@@ -238,7 +250,6 @@ void PrintRegisters(int bus, int device, int function) {
 	ReadPciDword(bus, device, function, sizeof(DWORD) * 44, &data);
 	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
 	cout << "|-----------------------------------------------------------------------|" << endl << endl;
-
 }
 
 void GetStandardCapabilities(int bus, int device, int function) {
@@ -250,6 +261,7 @@ void GetStandardCapabilities(int bus, int device, int function) {
 	BYTE next_item_pointer = common_configuration_space.capabilities_pointer;
 	while (TRUE) {
 		BYTE capability_id = GetCapabilityID(bus, device, function, next_item_pointer);
+		capability_order.push_back(capability_id);
 		printf("[DEBUG] Capability ID : 0x%02X\n", capability_id);
 		if (capability_id == CAPABILITY_PCI_POWER_MANAGEMENT_INTERFACE)
 			GetPciPowerManagementInterfaceCapability(bus, device, function, next_item_pointer);
@@ -416,19 +428,104 @@ void GetPciPowerManagementInterfaceCapability(int bus, int device, int function,
 	pci_power_management_interface_capability.exists = TRUE;
 }
 
+void PrintCapability(void) {
+	if ((common_configuration_space.header_type & 0x7F) == 0x00)
+		PrintType0ConfigurationSpaceHeader();
+	if ((common_configuration_space.header_type & 0x7F) == 0x01)
+		PrintType1ConfigurationSpaceHeader();
+	for (int index = 0; index < capability_order.size(); index++) {
+		BYTE capability_id = capability_order[index];
+		if (capability_id == CAPABILITY_PCI_POWER_MANAGEMENT_INTERFACE)
+			PrintPciPowerManagementInterfaceCapability();
+		if (capability_id == CAPABILITY_AGP)
+			;
+		if (capability_id == CAPABILITY_VPD)
+			;
+		if (capability_id == CAPABILITY_SLOT_IDENTIFICATION)
+			;
+		if (capability_id == CAPABILITY_MSI)
+			;
+		if (capability_id == CAPABILITY_COMPACTPCI_HOT_SWAP)
+			;
+		if (capability_id == CAPABILITY_PCI_X)
+			;
+		if (capability_id == CAPABILITY_HYPER_TRANSPORT)
+			;
+		if (capability_id == CAPABILITY_VENDOR_SPECIFIC)
+			;
+		if (capability_id == CAPABILITY_DEBUG_PORT)
+			;
+		if (capability_id == CAPABILITY_COMPACT_PCI_CENTRAL_RESOURCE_CONTROL)
+			;
+		if (capability_id == CAPABILITY_PCI_HOT_PLUG)
+			;
+		if (capability_id == CAPABILITY_PCI_BRIDGE_SUBSYSTEM_ID)
+			;
+		if (capability_id == CAPABILITY_AGP_8X)
+			;
+		if (capability_id == CAPABILITY_SECURE_DEVICE)
+			;
+		if (capability_id == CAPABILITY_PCI_EXPRESS)
+			;
+		if (capability_id == CAPABILITY_MSI_X)
+			;
+		if (capability_id == CAPABILITY_SERIAL_ATA_DATA_INDEX_CONFIGURATION)
+			;
+		if (capability_id == CAPABILITY_ADVANCED_FEATURES)
+			;
+		if (capability_id == CAPABILITY_ENHANCED_ALLOCATION)
+			;
+		if (capability_id == CAPABILITY_FLATTENING_PORTAL_BRIDGE)
+			;
+	}
+}
+
 void PrintType0ConfigurationSpaceHeader(void) {
+	string bit;
 	if (type_0_configuration_space_header.exists) {
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                [000h] Type 0 Configuration Space Header               |" << endl;
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|              Device ID            |             Vendor ID             |" << endl;
-		printf("|                0x%04X             |               0x%04X              |\n", common_configuration_space.device_id, common_configuration_space.vendor_id);
-		cout << "|-----------------------------------|-----------------------------------|" << endl;
-		cout << "|               Status              |              Command              |" << endl;
-		printf("|               0x%04X              |               0x%04X              |\n", common_configuration_space.status, common_configuration_space.command);
-		cout << "|-----------------------------------|-----------------------------------|" << endl;
-		cout << "|             Class Code            |             Revision ID           |" << endl;
-		printf("|              0x%06X             |                0x%02X               |\n", common_configuration_space.class_code, common_configuration_space.revision_id);
+		printf("[+] [%03Xh] Type 0 Configuration Space Header\n", 0);
+		printf("  -  Vendor ID : 0x%04X\n", common_configuration_space.vendor_id);
+		printf("  -  Device ID : 0x%04X\n", common_configuration_space.device_id);
+		printf(" [+] Command : 0x%04X\n", common_configuration_space.command);
+		bit = ReverseString(bitset<16>(common_configuration_space.command).to_string());
+		cout << "      -  I/O Space Enable (RW) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Disables the device response)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Allows the device to respond to I/O Space accesses)" << endl;
+		cout << "      -  Memory Space Enable (RW) : " << bit.at(1) << endl;
+		cout << "      -  Bus Master Enable (RW) : " << bit[2] << endl;
+		cout << "      -  Special Cycle Enable (RO) : " << bit[3] << endl;
+		cout << "      -  Memory Write and Invalidate (RO) : " << bit[4] << endl;
+		cout << "      -  VGA Palette Snoop (RO) : " << bit[5] << endl;
+		cout << "      -  Parity Error Response (RW) : " << bit[6] << endl;
+		cout << "      -  IDSEL Stepping/Wait Cycle Control (RO) : " << bit[7] << endl;
+		cout << "      -  SERR# Enable (RW) : " << bit[8] << endl;
+		cout << "      -  Fast Back-to-Back Transactions Enable (RO) : " << bit[9] << endl;
+		cout << "      -  Interrupt Disable (RW) :" << bit[10] << endl;
+		cout << "      -  Reserved (RSVD) : " << ReverseString(bit.substr(11, 5)) << endl;
+		printf(" [+] Status : 0x%04X\n", common_configuration_space.status);
+		bit = ReverseString(bitset<16>(common_configuration_space.status).to_string());
+		cout << "      -  Immediate Readiness (RO) : " << bit.at(0) << endl;
+		cout << "      -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 2)) << endl;
+		cout << "      -  Interrupt Status (RO) : " << bit.at(3) << endl;
+		cout << "      -  Capabilities List (RO) : " << bit.at(4) << endl;
+		cout << "      -  66 MHz Capable (RO) : " << bit.at(5) << endl;
+		cout << "      -  Reserved (RSVD) : " << bit.at(6) << endl;
+		cout << "      -  Fast Back-to-Back Transactions Capable (RO) : " << bit.at(7) << endl;
+		cout << "      -  Master Data Parity Error (RW1C) : " << bit.at(8) << endl;
+		cout << "      -  DEVSEL Timing (RO) : " << ReverseString(bit.substr(9, 2)) << endl;
+		cout << "      -  Signaled Target Abort (RW1C) : " << bit.at(11) << endl;
+		cout << "      -  Received Target Abort (RW1C)  : " << bit.at(12) << endl;
+		cout << "      -  Received Master Abort (RW1C) : " << bit.at(13) << endl;
+		cout << "      -  Signaled System Error (RW1C) : " << bit.at(14) << endl;
+		cout << "      -  Detected Parity Error (RW1C) : " << bit.at(15) << endl;
+		printf("  -  Revision ID : 0x%02X\n", common_configuration_space.revision_id);
+		printf(" [+] Class Code : 0x%06X\n", common_configuration_space.class_code);
+		bit = ReverseString(bitset<24>(common_configuration_space.class_code).to_string());
+		cout << "      -  Programming Interface (RO) : " << ReverseString(bit.substr(0, 8)) << endl;
+		cout << "      -  Sub-Class Code (RO) : " << ReverseString(bit.substr(8, 8)) << endl;
+		cout << "      -  Base Class Code (RO) : " << ReverseString(bit.substr(16, 8)) << endl;
 		cout << "|-----------------------------------------------------------------------|" << endl;
 		cout << "|    BIST    |   Header Type    |   Lantency Timer  |  Cache Line Size  |" << endl;
 		printf("|    0x%02X    |       0x%02X       |        0x%02X       |        0x%02X       |\n", common_configuration_space.bist, common_configuration_space.header_type, common_configuration_space.latency_timer, common_configuration_space.cache_line_size);
@@ -472,6 +569,12 @@ void PrintType0ConfigurationSpaceHeader(void) {
 	}
 }
 
+void PrintType1ConfigurationSpaceHeader(void) {
+	if (type_1_configuration_space_header.exists) {
+
+	}
+}
+
 void PrintPciPowerManagementInterfaceCapability(void) {
 	if (pci_power_management_interface_capability.exists) {
 		cout << "|-----------------------------------------------------------------------|" << endl;
@@ -482,6 +585,6 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 		cout << "|-----------------------------------------------------------------------|" << endl;
 		cout << "|   Data   |   Reserved   |   Power Management Control/Status Register  |" << endl;
 		printf("|   0x%02X   |     0x%02X     |                   0x%06X                  |\n", pci_power_management_interface_capability.data, pci_power_management_interface_capability.reserved, pci_power_management_interface_capability.power_management_control_status);
-		cout << "|-----------------------------------------------------------------------|" << endl;
+		cout << "|-----------------------------------------------------------------------|" << endl << endl;
 	}
 }

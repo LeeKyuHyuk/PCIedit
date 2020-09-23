@@ -48,10 +48,8 @@ int main() {
 			if (strcmp(command.c_str(), "h") == 0 || strcmp(command.c_str(), "H") == 0)
 				Help();
 			else if (strcmp(command.c_str(), "r") == 0 || strcmp(command.c_str(), "R") == 0) {
-				// PrintRegisters(bus, device, function);
 				GetStandardCapabilities(bus, device, function);
-				PrintType0ConfigurationSpaceHeader();
-				PrintPciPowerManagementInterfaceCapability();
+				PrintCapability();
 			}
 			else if (strcmp(command.c_str(), "q") == 0 || strcmp(command.c_str(), "Q") == 0)
 				break;

@@ -22,6 +22,7 @@
 #define CAPABILITY_ENHANCED_ALLOCATION 0x14
 #define CAPABILITY_FLATTENING_PORTAL_BRIDGE 0x15
 
+std::string ReverseString(const std::string str);
 void PrintRegisters(int bus, int device, int function);
 void GetStandardCapabilities(int bus, int device, int function);
 BYTE GetCapabilityID(int bus, int device, int function, BYTE offset);
@@ -30,5 +31,7 @@ void GetCommonConfigurationSpace(int bus, int device, int function);
 void GetType0ConfigurationSpaceHeader(int bus, int device, int function);
 void GetType1ConfigurationSpaceHeader(int bus, int device, int function);
 void GetPciPowerManagementInterfaceCapability(int bus, int device, int function, BYTE offset);
+void PrintCapability(void);
 void PrintType0ConfigurationSpaceHeader(void);
+void PrintType1ConfigurationSpaceHeader(void);
 void PrintPciPowerManagementInterfaceCapability(void);
