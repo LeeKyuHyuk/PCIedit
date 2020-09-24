@@ -55,8 +55,9 @@ typedef struct Type1ConfigurationSpaceHeader {
 	WORD prefetchable_memory_limit;
 	DWORD prefetchable_memory_base_upper;
 	DWORD prefetchable_memory_limit_upper;
-	WORD uo_base_upper;
-	WORD io_base_limit;
+	WORD io_base_upper;
+	WORD io_limit_upper;
+
 	DWORD expansion_rom_base_address;
 	WORD bridge_control;
 } Type1ConfigurationSpaceHeader;
@@ -254,9 +255,9 @@ void PrintRegisters(int bus, int device, int function) {
 
 void GetStandardCapabilities(int bus, int device, int function) {
 	GetCommonConfigurationSpace(bus, device, function);
-	if (common_configuration_space.header_type == 0)
+	if ((common_configuration_space.header_type & 0x7F) == 0x00)
 		GetType0ConfigurationSpaceHeader(bus, device, function);
-	if (common_configuration_space.header_type == 1)
+	if ((common_configuration_space.header_type & 0x7F) == 0x01)
 		GetType1ConfigurationSpaceHeader(bus, device, function);
 	BYTE next_item_pointer = common_configuration_space.capabilities_pointer;
 	while (TRUE) {
@@ -405,8 +406,8 @@ void GetType1ConfigurationSpaceHeader(int bus, int device, int function) {
 	ReadPciDword(bus, device, function, 0x2C, &data);
 	type_1_configuration_space_header.prefetchable_memory_limit_upper = data[1];
 	ReadPciDword(bus, device, function, 0x30, &data);
-	type_1_configuration_space_header.uo_base_upper = LOWORD(data[1]);
-	type_1_configuration_space_header.io_base_limit = HIWORD(data[1]);
+	type_1_configuration_space_header.io_base_upper = LOWORD(data[1]);
+	type_1_configuration_space_header.io_limit_upper = HIWORD(data[1]);
 	ReadPciDword(bus, device, function, 0x38, &data);
 	type_1_configuration_space_header.expansion_rom_base_address = data[1];
 	ReadPciDword(bus, device, function, 0x3C, &data);
@@ -433,6 +434,7 @@ void PrintCapability(void) {
 		PrintType0ConfigurationSpaceHeader();
 	if ((common_configuration_space.header_type & 0x7F) == 0x01)
 		PrintType1ConfigurationSpaceHeader();
+	/*
 	for (int index = 0; index < capability_order.size(); index++) {
 		BYTE capability_id = capability_order[index];
 		if (capability_id == CAPABILITY_PCI_POWER_MANAGEMENT_INTERFACE)
@@ -478,100 +480,506 @@ void PrintCapability(void) {
 		if (capability_id == CAPABILITY_FLATTENING_PORTAL_BRIDGE)
 			;
 	}
+	*/
 }
 
 void PrintType0ConfigurationSpaceHeader(void) {
 	string bit;
 	if (type_0_configuration_space_header.exists) {
 		printf("[+] [%03Xh] Type 0 Configuration Space Header\n", 0);
-		printf("  -  Vendor ID : 0x%04X\n", common_configuration_space.vendor_id);
-		printf("  -  Device ID : 0x%04X\n", common_configuration_space.device_id);
-		printf(" [+] Command : 0x%04X\n", common_configuration_space.command);
+		printf("    -  Vendor ID : 0x%04X\n", common_configuration_space.vendor_id);
+		printf("    -  Device ID : 0x%04X\n", common_configuration_space.device_id);
+		printf("   [+] Command : 0x%04X\n", common_configuration_space.command);
 		bit = ReverseString(bitset<16>(common_configuration_space.command).to_string());
-		cout << "      -  I/O Space Enable (RW) : " << bit.at(0);
+		cout << "       -  I/O Space Enable (RW) : " << bit.at(0);
 		if (bit.at(0) == '0')
 			cout << " (Disables the device response)" << endl;
 		if (bit.at(0) == '1')
 			cout << " (Allows the device to respond to I/O Space accesses)" << endl;
-		cout << "      -  Memory Space Enable (RW) : " << bit.at(1) << endl;
-		cout << "      -  Bus Master Enable (RW) : " << bit[2] << endl;
-		cout << "      -  Special Cycle Enable (RO) : " << bit[3] << endl;
-		cout << "      -  Memory Write and Invalidate (RO) : " << bit[4] << endl;
-		cout << "      -  VGA Palette Snoop (RO) : " << bit[5] << endl;
-		cout << "      -  Parity Error Response (RW) : " << bit[6] << endl;
-		cout << "      -  IDSEL Stepping/Wait Cycle Control (RO) : " << bit[7] << endl;
-		cout << "      -  SERR# Enable (RW) : " << bit[8] << endl;
-		cout << "      -  Fast Back-to-Back Transactions Enable (RO) : " << bit[9] << endl;
-		cout << "      -  Interrupt Disable (RW) :" << bit[10] << endl;
-		cout << "      -  Reserved (RSVD) : " << ReverseString(bit.substr(11, 5)) << endl;
-		printf(" [+] Status : 0x%04X\n", common_configuration_space.status);
+		cout << "       -  Memory Space Enable (RW) : " << bit.at(1);
+		if (bit.at(1) == '0')
+			cout << " (Disables the device response)" << endl;
+		if (bit.at(1) == '1')
+			cout << " (Allows the device to respond to Memory Space accesses)" << endl;
+		cout << "       -  Bus Master Enable (RW) : " << bit.at(2);
+		if (bit.at(2) == '0')
+			cout << " (PCI Express Function is not allowed to issue any Memory or I/O Requests)" << endl;
+		if (bit.at(2) == '1')
+			cout << " (PCI Express Function is allowed to issue Memory or I/O Requests)" << endl;
+		cout << "       -  Special Cycle Enable (RO) : " << bit.at(3) << endl;
+		cout << "       -  Memory Write and Invalidate (RO) : " << bit.at(4) << endl;
+		cout << "       -  VGA Palette Snoop (RO) : " << bit.at(5) << endl;
+		cout << "       -  Parity Error Response (RW) : " << bit.at(6) << endl;
+		cout << "       -  IDSEL Stepping/Wait Cycle Control (RO) : " << bit.at(7) << endl;
+		cout << "       -  SERR# Enable (RW) : " << bit.at(8) << endl;
+		cout << "       -  Fast Back-to-Back Transactions Enable (RO) : " << bit.at(9) << endl;
+		cout << "       -  Interrupt Disable (RW) :" << bit.at(10) << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(11, 5)) << endl;
+		printf("   [+] Status : 0x%04X\n", common_configuration_space.status);
 		bit = ReverseString(bitset<16>(common_configuration_space.status).to_string());
-		cout << "      -  Immediate Readiness (RO) : " << bit.at(0) << endl;
-		cout << "      -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 2)) << endl;
-		cout << "      -  Interrupt Status (RO) : " << bit.at(3) << endl;
-		cout << "      -  Capabilities List (RO) : " << bit.at(4) << endl;
-		cout << "      -  66 MHz Capable (RO) : " << bit.at(5) << endl;
-		cout << "      -  Reserved (RSVD) : " << bit.at(6) << endl;
-		cout << "      -  Fast Back-to-Back Transactions Capable (RO) : " << bit.at(7) << endl;
-		cout << "      -  Master Data Parity Error (RW1C) : " << bit.at(8) << endl;
-		cout << "      -  DEVSEL Timing (RO) : " << ReverseString(bit.substr(9, 2)) << endl;
-		cout << "      -  Signaled Target Abort (RW1C) : " << bit.at(11) << endl;
-		cout << "      -  Received Target Abort (RW1C)  : " << bit.at(12) << endl;
-		cout << "      -  Received Master Abort (RW1C) : " << bit.at(13) << endl;
-		cout << "      -  Signaled System Error (RW1C) : " << bit.at(14) << endl;
-		cout << "      -  Detected Parity Error (RW1C) : " << bit.at(15) << endl;
-		printf("  -  Revision ID : 0x%02X\n", common_configuration_space.revision_id);
-		printf(" [+] Class Code : 0x%06X\n", common_configuration_space.class_code);
+		cout << "       -  Immediate Readiness (RO) : " << bit.at(0) << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 2)) << endl;
+		cout << "       -  Interrupt Status (RO) : " << bit.at(3) << endl;
+		cout << "       -  Capabilities List (RO) : " << bit.at(4) << endl;
+		cout << "       -  66 MHz Capable (RO) : " << bit.at(5) << endl;
+		cout << "       -  Reserved (RSVD) : " << bit.at(6) << endl;
+		cout << "       -  Fast Back-to-Back Transactions Capable (RO) : " << bit.at(7) << endl;
+		cout << "       -  Master Data Parity Error (RW1C) : " << bit.at(8) << endl;
+		cout << "       -  DEVSEL Timing (RO) : " << ReverseString(bit.substr(9, 2)) << endl;
+		cout << "       -  Signaled Target Abort (RW1C) : " << bit.at(11) << endl;
+		cout << "       -  Received Target Abort (RW1C)  : " << bit.at(12) << endl;
+		cout << "       -  Received Master Abort (RW1C) : " << bit.at(13) << endl;
+		cout << "       -  Signaled System Error (RW1C) : " << bit.at(14) << endl;
+		cout << "       -  Detected Parity Error (RW1C) : " << bit.at(15) << endl;
+		printf("    -  Revision ID : 0x%02X\n", common_configuration_space.revision_id);
+		printf("   [+] Class Code : 0x%06X\n", common_configuration_space.class_code);
 		bit = ReverseString(bitset<24>(common_configuration_space.class_code).to_string());
-		cout << "      -  Programming Interface (RO) : " << ReverseString(bit.substr(0, 8)) << endl;
-		cout << "      -  Sub-Class Code (RO) : " << ReverseString(bit.substr(8, 8)) << endl;
-		cout << "      -  Base Class Code (RO) : " << ReverseString(bit.substr(16, 8)) << endl;
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|    BIST    |   Header Type    |   Lantency Timer  |  Cache Line Size  |" << endl;
-		printf("|    0x%02X    |       0x%02X       |        0x%02X       |        0x%02X       |\n", common_configuration_space.bist, common_configuration_space.header_type, common_configuration_space.latency_timer, common_configuration_space.cache_line_size);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                         Base Address Register 0                       |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.base_address_register[0]);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                         Base Address Register 1                       |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.base_address_register[1]);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                         Base Address Register 2                       |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.base_address_register[2]);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                         Base Address Register 3                       |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.base_address_register[3]);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                         Base Address Register 4                       |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.base_address_register[4]);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                         Base Address Register 5                       |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.base_address_register[5]);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                           Cardbus CIS Pointer                         |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.cardbus_cis_pointer);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|            Subsystem ID           |         Subsystem Vendor ID       |" << endl;
-		printf("|                0x%04X             |               0x%04X              |\n", type_0_configuration_space_header.subsystem_id, type_0_configuration_space_header.subsystem_vendor_id);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                        Expansion ROM Base Address                     |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.expansion_rom_base_address);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|              Reserved             |        Capabilities Pointer       |" << endl;
-		printf("|              0x%06X             |                0x%02X               |\n", type_0_configuration_space_header.reserved1, common_configuration_space.capabilities_pointer);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|                                Reserved                               |" << endl;
-		printf("|                               0x%08X                              |\n", type_0_configuration_space_header.reserved2);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|   Max Latency   |   Min Grant   |   Interrupt Pin  |  Interrupt Line  |" << endl;
-		printf("|       0x%02X      |      0x%02X     |        0x%02X      |       0x%02X       |\n", type_0_configuration_space_header.max_latency, type_0_configuration_space_header.min_grant, common_configuration_space.interrupt_pin, common_configuration_space.interrupt_line);
-		cout << "|-----------------------------------------------------------------------|" << endl << endl;
+		cout << "       -  Programming Interface (RO) : " << ReverseString(bit.substr(0, 8)) << endl;
+		cout << "       -  Sub-Class Code (RO) : " << ReverseString(bit.substr(8, 8)) << endl;
+		cout << "       -  Base Class Code (RO) : " << ReverseString(bit.substr(16, 8));
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x00)
+			cout << " (Device was built before Class Code definitions were finalized)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x01)
+			cout << " (Mass storage controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x02)
+			cout << " (Network controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x03)
+			cout << " (Display controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x04)
+			cout << " (Multimedia device)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x05)
+			cout << " (Memory controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x06)
+			cout << " (Bridge device)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x07)
+			cout << " (Simple communication controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x08)
+			cout << " (Base system peripherals)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x09)
+			cout << " (Input devices)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0A)
+			cout << " (Docking stations)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0B)
+			cout << " (Processors)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0C)
+			cout << " (Serial bus controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0D)
+			cout << " (Wireless controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0E)
+			cout << " (Intelligent I/O controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0F)
+			cout << " (Satellite communication controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x10)
+			cout << " (Encryption/Decryption controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x11)
+			cout << " (Data acquisition and signal processing controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0xFF)
+			cout << " (Device does not fit in any defined classes)" << endl;
+		printf("    -  Cache Line Size : 0x%02X\n", common_configuration_space.cache_line_size);
+		printf("    -  Lantency Timer : 0x%02X\n", common_configuration_space.latency_timer);
+		printf("   [+] Header Type : 0x%02X\n", common_configuration_space.header_type);
+		bit = ReverseString(bitset<8>(common_configuration_space.header_type).to_string());
+		cout << "       -  Header Layout (RO) : " << ReverseString(bit.substr(0, 7));
+		if (stoi(ReverseString(bit.substr(0, 7)), 0, 2) == 0x00)
+			cout << " (Type 0 Configuration Space Header)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 7)), 0, 2) == 0x01)
+			cout << " (Type 1 Configuration Space Header)" << endl;
+		cout << "       -  Multi-Function Device (RO) : " << bit.at(7);
+		if (bit.at(7) == '0')
+			cout << " (Device is single function)" << endl;
+		if (bit.at(7) == '1')
+			cout << " (Device has multiple functions)" << endl;
+		printf("   [+] BIST : 0x%02X\n", common_configuration_space.bist);
+		bit = ReverseString(bitset<8>(common_configuration_space.bist).to_string());
+		cout << "       -  Completion Code (RO) : " << ReverseString(bit.substr(0, 4)) << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(4, 2)) << endl;
+		cout << "       -  Start BIST (RW) : " << bit.at(6) << endl;
+		cout << "       -  BIST Capable (RO) : " << bit.at(7);
+		if (bit.at(7) == '0')
+			cout << " (Device is not BIST capable)" << endl;
+		if (bit.at(7) == '1')
+			cout << " (Device supports BIST)" << endl;
+		printf("   [+] Base Address Register 0 : 0x%08X\n", type_0_configuration_space_header.base_address_register[0]);
+		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[0]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("    -  Base Address Register 1 : 0x%08X\n", type_0_configuration_space_header.base_address_register[1]);
+		printf("   [+] Base Address Register 2 : 0x%08X\n", type_0_configuration_space_header.base_address_register[2]);
+		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[2]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("   [+] Base Address Register 3 : 0x%08X\n", type_0_configuration_space_header.base_address_register[3]);
+		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[3]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("   [+] Base Address Register 4 : 0x%08X\n", type_0_configuration_space_header.base_address_register[4]);
+		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[4]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("   [+] Base Address Register 5 : 0x%08X\n", type_0_configuration_space_header.base_address_register[5]);
+		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[5]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("    -  Cardbus CIS Pointer : 0x%08X\n", type_0_configuration_space_header.cardbus_cis_pointer);
+		printf("    -  Subsystem Vendor ID : 0x%04X\n", type_0_configuration_space_header.subsystem_vendor_id);
+		printf("    -  Subsystem ID : 0x%04X\n", type_0_configuration_space_header.subsystem_id);
+		printf("   [+] Expansion ROM Base Address : 0x%08X\n", type_0_configuration_space_header.expansion_rom_base_address);
+		bit = ReverseString(bitset<32>(type_0_configuration_space_header.expansion_rom_base_address).to_string());
+		cout << "       -  Expansion ROM Enable (RW) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (The device\'s expansion ROM address space is disabled)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Address decoding is enabled using the parameters in the other part of the base register)" << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 10)) << endl;
+		cout << "       -  Expansion ROM Base Address (RW) : " << ReverseString(bit.substr(11, 21)) << endl;
+		printf("    -  Capabilities Pointer : 0x%02X\n", common_configuration_space.capabilities_pointer);
+		printf("    -  Reserved : 0x%06X\n", type_0_configuration_space_header.reserved1);
+		printf("    -  Reserved : 0x%08X\n", type_0_configuration_space_header.reserved2);
+		printf("    -  Interrupt Line : 0x%02X\n", common_configuration_space.interrupt_line);
+		printf("    -  Interrupt Pin : 0x%02X\n", common_configuration_space.interrupt_pin);
+		printf("    -  Min Grant : 0x%02X\n", type_0_configuration_space_header.min_grant);
+		printf("    -  Max Latency : 0x%02X\n\n", type_0_configuration_space_header.max_latency);
 	}
 }
 
 void PrintType1ConfigurationSpaceHeader(void) {
+	string bit;
 	if (type_1_configuration_space_header.exists) {
-
+		printf("[+] [%03Xh] Type 1 Configuration Space Header\n", 0);
+		printf("    -  Vendor ID : 0x%04X\n", common_configuration_space.vendor_id);
+		printf("    -  Device ID : 0x%04X\n", common_configuration_space.device_id);
+		printf("   [+] Command : 0x%04X\n", common_configuration_space.command);
+		bit = ReverseString(bitset<16>(common_configuration_space.command).to_string());
+		cout << "       -  I/O Space Enable (RW) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Disables the device response)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Allows the device to respond to I/O Space accesses)" << endl;
+		cout << "       -  Memory Space Enable (RW) : " << bit.at(1);
+		if (bit.at(1) == '0')
+			cout << " (Disables the device response)" << endl;
+		if (bit.at(1) == '1')
+			cout << " (Allows the device to respond to Memory Space accesses)" << endl;
+		cout << "       -  Bus Master Enable (RW) : " << bit.at(2);
+		if (bit.at(2) == '0')
+			cout << " (PCI Express Function is not allowed to issue any Memory or I/O Requests)" << endl;
+		if (bit.at(2) == '1')
+			cout << " (PCI Express Function is allowed to issue Memory or I/O Requests)" << endl;
+		cout << "       -  Special Cycle Enable (RO) : " << bit.at(3) << endl;
+		cout << "       -  Memory Write and Invalidate (RO) : " << bit.at(4) << endl;
+		cout << "       -  VGA Palette Snoop (RO) : " << bit.at(5) << endl;
+		cout << "       -  Parity Error Response (RW) : " << bit.at(6) << endl;
+		cout << "       -  IDSEL Stepping/Wait Cycle Control (RO) : " << bit.at(7) << endl;
+		cout << "       -  SERR# Enable (RW) : " << bit.at(8) << endl;
+		cout << "       -  Fast Back-to-Back Transactions Enable (RO) : " << bit.at(9) << endl;
+		cout << "       -  Interrupt Disable (RW) :" << bit.at(10) << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(11, 5)) << endl;
+		printf("   [+] Status : 0x%04X\n", common_configuration_space.status);
+		bit = ReverseString(bitset<16>(common_configuration_space.status).to_string());
+		cout << "       -  Immediate Readiness (RO) : " << bit.at(0) << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 2)) << endl;
+		cout << "       -  Interrupt Status (RO) : " << bit.at(3) << endl;
+		cout << "       -  Capabilities List (RO) : " << bit.at(4) << endl;
+		cout << "       -  66 MHz Capable (RO) : " << bit.at(5) << endl;
+		cout << "       -  Reserved (RSVD) : " << bit.at(6) << endl;
+		cout << "       -  Fast Back-to-Back Transactions Capable (RO) : " << bit.at(7) << endl;
+		cout << "       -  Master Data Parity Error (RW1C) : " << bit.at(8) << endl;
+		cout << "       -  DEVSEL Timing (RO) : " << ReverseString(bit.substr(9, 2)) << endl;
+		cout << "       -  Signaled Target Abort (RW1C) : " << bit.at(11) << endl;
+		cout << "       -  Received Target Abort (RW1C)  : " << bit.at(12) << endl;
+		cout << "       -  Received Master Abort (RW1C) : " << bit.at(13) << endl;
+		cout << "       -  Signaled System Error (RW1C) : " << bit.at(14) << endl;
+		cout << "       -  Detected Parity Error (RW1C) : " << bit.at(15) << endl;
+		printf("    -  Revision ID : 0x%02X\n", common_configuration_space.revision_id);
+		printf("   [+] Class Code : 0x%06X\n", common_configuration_space.class_code);
+		bit = ReverseString(bitset<24>(common_configuration_space.class_code).to_string());
+		cout << "       -  Programming Interface (RO) : " << ReverseString(bit.substr(0, 8)) << endl;
+		cout << "       -  Sub-Class Code (RO) : " << ReverseString(bit.substr(8, 8)) << endl;
+		cout << "       -  Base Class Code (RO) : " << ReverseString(bit.substr(16, 8));
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x00)
+			cout << " (Device was built before Class Code definitions were finalized)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x01)
+			cout << " (Mass storage controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x02)
+			cout << " (Network controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x03)
+			cout << " (Display controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x04)
+			cout << " (Multimedia device)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x05)
+			cout << " (Memory controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x06)
+			cout << " (Bridge device)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x07)
+			cout << " (Simple communication controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x08)
+			cout << " (Base system peripherals)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x09)
+			cout << " (Input devices)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0A)
+			cout << " (Docking stations)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0B)
+			cout << " (Processors)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0C)
+			cout << " (Serial bus controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0D)
+			cout << " (Wireless controller)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0E)
+			cout << " (Intelligent I/O controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x0F)
+			cout << " (Satellite communication controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x10)
+			cout << " (Encryption/Decryption controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0x11)
+			cout << " (Data acquisition and signal processing controllers)" << endl;
+		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0xFF)
+			cout << " (Device does not fit in any defined classes)" << endl;
+		printf("    -  Cache Line Size : 0x%02X\n", common_configuration_space.cache_line_size);
+		printf("    -  Lantency Timer : 0x%02X\n", common_configuration_space.latency_timer);
+		printf("   [+] Header Type : 0x%02X\n", common_configuration_space.header_type);
+		bit = ReverseString(bitset<8>(common_configuration_space.header_type).to_string());
+		cout << "       -  Header Layout (RO) : " << ReverseString(bit.substr(0, 7));
+		if (stoi(ReverseString(bit.substr(0, 7)), 0, 2) == 0x00)
+			cout << " (Type 0 Configuration Space Header)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 7)), 0, 2) == 0x01)
+			cout << " (Type 1 Configuration Space Header)" << endl;
+		cout << "       -  Multi-Function Device (RO) : " << bit.at(7);
+		if (bit.at(7) == '0')
+			cout << " (Device is single function)" << endl;
+		if (bit.at(7) == '1')
+			cout << " (Device has multiple functions)" << endl;
+		printf("   [+] BIST : 0x%02X\n", common_configuration_space.bist);
+		bit = ReverseString(bitset<8>(common_configuration_space.bist).to_string());
+		cout << "       -  Completion Code (RO) : " << ReverseString(bit.substr(0, 4)) << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(4, 2)) << endl;
+		cout << "       -  Start BIST (RW) : " << bit.at(6) << endl;
+		cout << "       -  BIST Capable (RO) : " << bit.at(7);
+		if (bit.at(7) == '0')
+			cout << " (Device is not BIST capable)" << endl;
+		if (bit.at(7) == '1')
+			cout << " (Device supports BIST)" << endl;
+		printf("   [+] Base Address Register 0 : 0x%08X\n", type_1_configuration_space_header.base_address_register[0]);
+		bit = ReverseString(bitset<32>(type_1_configuration_space_header.base_address_register[0]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("   [+] Base Address Register 1 : 0x%08X\n", type_1_configuration_space_header.base_address_register[1]);
+		bit = ReverseString(bitset<32>(type_1_configuration_space_header.base_address_register[1]).to_string());
+		cout << "       -  Space Indicator (RO) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (Base Address register is mapped to Memory Space)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Base Address register is mapped to I/O Space)" << endl;
+		cout << "       -  Type (RO) : " << ReverseString(bit.substr(1, 2));
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x00)
+			cout << " (Base register is 32 bits wide and can be mapped anywhere in the 32 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x01)
+			cout << " (Reserved)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x02)
+			cout << " (Base register is 64 bits wide and can be mapped anywhere in the 64 address bit Memory Space)" << endl;
+		if (stoi(ReverseString(bit.substr(1, 2)), 0, 2) == 0x03)
+			cout << " (Reserved)" << endl;
+		cout << "       -  Prefetchable (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (The data is not prefetchable)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (The data is prefetchable)" << endl;
+		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
+		printf("    -  Primary Bus Number (RW) : 0x%02X\n", type_1_configuration_space_header.primary_bus_number);
+		printf("    -  Secondary Bus Number (RW) : 0x%02X\n", type_1_configuration_space_header.secondary_bus_number);
+		printf("    -  Subordinate Bus Number (RO) : 0x%02X\n", type_1_configuration_space_header.subordinate_bus_number);
+		printf("    -  Secondary Latency Timer (RO) : 0x%02X\n", type_1_configuration_space_header.secondary_latency_timer);
+		printf("   [+] I/O Base : 0x%02X\n", type_1_configuration_space_header.io_base);
+		bit = ReverseString(bitset<8>(type_1_configuration_space_header.io_base).to_string());
+		cout << "       -  I/O Addressing Capability (RO) : " << ReverseString(bit.substr(0, 4));
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x00)
+			cout << " (16-bit I/O addressing)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x01)
+			cout << " (32-bit I/O addressing)" << endl;
+		cout << "       -  I/O Base Address (RW) : " << ReverseString(bit.substr(4, 4)) << endl;
+		printf("   [+] I/O Limit : 0x%02X\n", type_1_configuration_space_header.io_limit);
+		bit = ReverseString(bitset<8>(type_1_configuration_space_header.io_limit).to_string());
+		cout << "       -  I/O Addressing Capability (RO) : " << ReverseString(bit.substr(0, 4));
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x00)
+			cout << " (16-bit I/O addressing)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x01)
+			cout << " (32-bit I/O addressing)" << endl;
+		cout << "       -  I/O Limit Address (RW) : " << ReverseString(bit.substr(4, 4)) << endl;
+		printf("   [+] Secondary Status : 0x%04X\n", type_1_configuration_space_header.secondary_status);
+		bit = ReverseString(bitset<16>(type_1_configuration_space_header.secondary_status).to_string());
+		cout << "       -  Reserved (RSVDZ) : " << ReverseString(bit.substr(0, 5)) << endl;
+		cout << "       -  66 MHz Capable (RO) : " << bit.at(5) << endl;
+		cout << "       -  Reserved (RSVDZ) : " << bit.at(6) << endl;
+		cout << "       -  Fast Back-to-Back Transactions Capable (RO) : " << bit.at(7) << endl;
+		cout << "       -  Master Data Parity Error (RW1C) : " << bit.at(8) << endl;
+		cout << "       -  DEVSEL Timing (RO) : " << ReverseString(bit.substr(9, 2)) << endl;
+		cout << "       -  Signaled Target Abort (RW1C) : " << bit.at(11) << endl;
+		cout << "       -  Received Target Abort (RW1C) : " << bit.at(12) << endl;
+		cout << "       -  Received Master Abort (RW1C) : " << bit.at(13) << endl;
+		cout << "       -  Received System Error (RW1C) : " << bit.at(14) << endl;
+		cout << "       -  Detected Parity Error (RW1C) : " << bit.at(15) << endl;
+		printf("   [+] Memory Base : 0x%04X\n", type_1_configuration_space_header.memory_base);
+		bit = ReverseString(bitset<16>(type_1_configuration_space_header.memory_base).to_string());
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(0, 4)) << endl;
+		cout << "       -  Memory Base Address (RW) : " << ReverseString(bit.substr(4, 12)) << endl;
+		printf("   [+] Memory Limit : 0x%04X\n", type_1_configuration_space_header.memory_limit);
+		bit = ReverseString(bitset<16>(type_1_configuration_space_header.memory_limit).to_string());
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(0, 4)) << endl;
+		cout << "       -  Memory Limit Address (RW) : " << ReverseString(bit.substr(4, 12)) << endl;
+		printf("   [+] Prefetchable Memory Base : 0x%04X\n", type_1_configuration_space_header.prefetchable_memory_base);
+		bit = ReverseString(bitset<16>(type_1_configuration_space_header.prefetchable_memory_base).to_string());
+		cout << "       -  Prefetchable Addressing Capability (RO) : " << ReverseString(bit.substr(0, 4));
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x00)
+			cout << " (Supports 32-bit addresses)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x01)
+			cout << " (Supports 64-bit addresses)" << endl;
+		cout << "       -  Prefetchable Memory Base Address (RW) : " << ReverseString(bit.substr(4, 12)) << endl;
+		printf("   [+] Prefetchable Memory Limit : 0x%04X\n", type_1_configuration_space_header.prefetchable_memory_limit);
+		bit = ReverseString(bitset<16>(type_1_configuration_space_header.prefetchable_memory_limit).to_string());
+		cout << "       -  Prefetchable Addressing Capability (RO) : " << ReverseString(bit.substr(0, 4));
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x00)
+			cout << " (Supports 32-bit addresses)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 4)), 0, 2) == 0x01)
+			cout << " (Supports 64-bit addresses)" << endl;
+		cout << "       -  Prefetchable Memory Limit Address (RW) : " << ReverseString(bit.substr(4, 12)) << endl;
+		printf("    -  Prefetchable Base Upper 32 Bits : 0x%08X\n", type_1_configuration_space_header.prefetchable_memory_base_upper);
+		printf("    -  Prefetchable Limit Upper 32 Bits : 0x%08X\n", type_1_configuration_space_header.prefetchable_memory_limit_upper);
+		printf("    -  I/O Base Upper 16 Bits : 0x%04X\n", type_1_configuration_space_header.io_base_upper);
+		printf("    -  I/O Limit Upper 16 Bits : 0x%04X\n", type_1_configuration_space_header.io_limit_upper);
+		printf("    -  Capabilities Pointer : 0x%02X\n", common_configuration_space.capabilities_pointer);
+		printf("   [+] Expansion ROM Base Address : 0x%08X\n", type_1_configuration_space_header.expansion_rom_base_address);
+		bit = ReverseString(bitset<32>(type_1_configuration_space_header.expansion_rom_base_address).to_string());
+		cout << "       -  Expansion ROM Enable (RW) : " << bit.at(0);
+		if (bit.at(0) == '0')
+			cout << " (The device\'s expansion ROM address space is disabled)" << endl;
+		if (bit.at(0) == '1')
+			cout << " (Address decoding is enabled using the parameters in the other part of the base register)" << endl;
+		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 10)) << endl;
+		cout << "       -  Expansion ROM Base Address (RW) : " << ReverseString(bit.substr(11, 21)) << endl;
+		printf("    -  Interrupt Line : 0x%02X\n", common_configuration_space.interrupt_line);
+		printf("    -  Interrupt Pin : 0x%02X\n", common_configuration_space.interrupt_pin);
+		printf("   [+] Bridge Control : 0x%04X\n", type_1_configuration_space_header.bridge_control);
+		bit = ReverseString(bitset<16>(type_1_configuration_space_header.bridge_control).to_string());
+		cout << "       -  Parity Error Response Enable (RW) : " << bit.at(0) << endl;
+		cout << "       -  SERR# Enable (RW) : " << bit.at(1) << endl;
+		cout << "       -  ISA Enable (RW) : " << bit.at(2) << endl;
+		cout << "       -  VGA Enable (RW) : " << bit.at(3) << endl;
+		cout << "       -  VGA 16-bit Decode (RW) : " << bit.at(4) << endl;
+		cout << "       -  Master Abort Mode (RO) : " << bit.at(5) << endl;
+		cout << "       -  Secondary Bus Reset (RW) : " << bit.at(6) << endl;
+		cout << "       -  Fast Back-to-Back Transactions Enable (RO) : " << bit.at(7) << endl;
+		cout << "       -  Primary Discard Timer (RO) : " << bit.at(8) << endl;
+		cout << "       -  Secondary Discard Timer (RO) : " << bit.at(9) << endl;
+		cout << "       -  Discard Timer Status (RO) : " << bit.at(10) << endl;
+		cout << "       -  Discard Timer SERR# Enable (RO) : " << bit.at(11) << endl;
+		cout << "       -  Reserved (RSVDP) : " << ReverseString(bit.substr(12, 4)) << endl;
 	}
 }
 
