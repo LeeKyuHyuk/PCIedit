@@ -82,7 +82,7 @@ PciPowerManagementInterfaceCapability pci_power_management_interface_capability 
 
 string ReverseString(const string str) {
 	string reverse;
-	for (int index = 0; index < str.length(); index++)
+	for (unsigned int index = 0; index < str.length(); index++)
 		reverse += str.substr(str.length() - index - 1, 1);
 	return reverse;
 }
@@ -263,7 +263,7 @@ void GetStandardCapabilities(int bus, int device, int function) {
 	while (TRUE) {
 		BYTE capability_id = GetCapabilityID(bus, device, function, next_item_pointer);
 		capability_order.push_back(capability_id);
-		printf("[DEBUG] Capability ID : 0x%02X\n", capability_id);
+		/* printf("[DEBUG] Capability ID : 0x%02X\n", capability_id); */
 		if (capability_id == CAPABILITY_PCI_POWER_MANAGEMENT_INTERFACE)
 			GetPciPowerManagementInterfaceCapability(bus, device, function, next_item_pointer);
 		if (capability_id == CAPABILITY_AGP)
@@ -309,7 +309,7 @@ void GetStandardCapabilities(int bus, int device, int function) {
 		next_item_pointer = GetNextItemPointer(bus, device, function, next_item_pointer);
 		if (next_item_pointer == 0)
 			break;
-		printf("[DEBUG] Next Item Pointer : 0x%02X\n", next_item_pointer);
+		/* printf("[DEBUG] Next Item Pointer : 0x%02X\n", next_item_pointer); */
 	}
 }
 
@@ -434,8 +434,7 @@ void PrintCapability(void) {
 		PrintType0ConfigurationSpaceHeader();
 	if ((common_configuration_space.header_type & 0x7F) == 0x01)
 		PrintType1ConfigurationSpaceHeader();
-	/*
-	for (int index = 0; index < capability_order.size(); index++) {
+	for (unsigned int index = 0; index < capability_order.size(); index++) {
 		BYTE capability_id = capability_order[index];
 		if (capability_id == CAPABILITY_PCI_POWER_MANAGEMENT_INTERFACE)
 			PrintPciPowerManagementInterfaceCapability();
@@ -480,7 +479,6 @@ void PrintCapability(void) {
 		if (capability_id == CAPABILITY_FLATTENING_PORTAL_BRIDGE)
 			;
 	}
-	*/
 }
 
 void PrintType0ConfigurationSpaceHeader(void) {
@@ -979,20 +977,83 @@ void PrintType1ConfigurationSpaceHeader(void) {
 		cout << "       -  Secondary Discard Timer (RO) : " << bit.at(9) << endl;
 		cout << "       -  Discard Timer Status (RO) : " << bit.at(10) << endl;
 		cout << "       -  Discard Timer SERR# Enable (RO) : " << bit.at(11) << endl;
-		cout << "       -  Reserved (RSVDP) : " << ReverseString(bit.substr(12, 4)) << endl;
+		cout << "       -  Reserved (RSVDP) : " << ReverseString(bit.substr(12, 4)) << endl << endl;
 	}
 }
 
 void PrintPciPowerManagementInterfaceCapability(void) {
+	string bit;
 	if (pci_power_management_interface_capability.exists) {
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		printf("|                [%03Xh] PCI Power Management Capability                 |\n", pci_power_management_interface_capability.offset);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|Power Management Capabilities| Next Capability Pointer | Capability ID |" << endl;
-		printf("|            0x%04X           |           0x%02X          |      0x%02X     |\n", pci_power_management_interface_capability.power_management_capabilities, pci_power_management_interface_capability.next_capability_pointer, pci_power_management_interface_capability.capability_id);
-		cout << "|-----------------------------------------------------------------------|" << endl;
-		cout << "|   Data   |   Reserved   |   Power Management Control/Status Register  |" << endl;
-		printf("|   0x%02X   |     0x%02X     |                   0x%06X                  |\n", pci_power_management_interface_capability.data, pci_power_management_interface_capability.reserved, pci_power_management_interface_capability.power_management_control_status);
-		cout << "|-----------------------------------------------------------------------|" << endl << endl;
+		printf("[+] [%03Xh] PCI Power Management Capability\n", pci_power_management_interface_capability.offset);
+		printf("    -  Capability ID : 0x%02X\n", pci_power_management_interface_capability.capability_id);
+		printf("    -  Next Capability Pointer : 0x%02X\n", pci_power_management_interface_capability.next_capability_pointer);
+		printf("   [+] Power Management Capabilities : 0x%04X\n", pci_power_management_interface_capability.power_management_capabilities);
+		bit = ReverseString(bitset<16>(pci_power_management_interface_capability.power_management_capabilities).to_string());
+		cout << "       -  Version (RO) : " << ReverseString(bit.substr(0, 3));
+		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x01)
+			cout << " (PCI Power Management Interface Specification rev.1.0)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x02)
+			cout << " (PCI Power Management Interface Specification rev.1.1)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x03)
+			cout << " (PCI Power Management Interface Specification rev.1.2)" << endl;
+		cout << "       -  PME Clock (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (Indicates that no PCI clock is required for the function to generate PME#)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (Indicates that the function relies on the presence of the PCI clock for PME# operation)" << endl;
+		cout << "       -  Immediate_Readiness_on_Return_to_D0 (RO) : " << bit.at(4) << endl;
+		cout << "       -  Device Specific Initialization (RO) : " << bit.at(5) << endl;
+		cout << "       -  Aux_Current (RO) : " << ReverseString(bit.substr(6, 3));
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x00)
+			cout << " (0mA (self powered))" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x01)
+			cout << " (55mA)" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x02)
+			cout << " (100mA)" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x03)
+			cout << " (160mA)" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x04)
+			cout << " (220mA)" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x05)
+			cout << " (270mA)" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x06)
+			cout << " (320mA)" << endl;
+		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x07)
+			cout << " (375mA)" << endl;
+		cout << "       -  D1_Support (RO) : " << bit.at(9) << endl;
+		cout << "       -  D2_Support (RO) : " << bit.at(10) << endl;
+		cout << "       -  PME_Support (RO) : " << ReverseString(bit.substr(11, 5)) << endl;
+		printf("   [+] Power Management Control/Status : 0x%04X\n", pci_power_management_interface_capability.power_management_control_status);
+		bit = ReverseString(bitset<16>(pci_power_management_interface_capability.power_management_control_status).to_string());
+		cout << "       -  PowerState (RW) : " << ReverseString(bit.substr(0, 2));
+		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x00)
+			cout << " (D0)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x01)
+			cout << " (D1)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x02)
+			cout << " (D2)" << endl;
+		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x03)
+			cout << " (D3_Hot)" << endl;
+		cout << "       -  Reserved (RSVDP) : " << bit.at(2) << endl;
+		cout << "       -  No_Soft_Reset (RO) : " << bit.at(3);
+		if (bit.at(3) == '0')
+			cout << " (Devices do perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.)" << endl;
+		if (bit.at(3) == '1')
+			cout << " (Devices do NOT perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.)" << endl;
+		cout << "       -  Reserved (RSVDP) : " << ReverseString(bit.substr(4, 4)) << endl;
+		cout << "       -  PME_En (RW) : " << bit.at(8);
+		if (bit.at(8) == '0')
+			cout << " (Assertion is disabled)" << endl;
+		if (bit.at(8) == '1')
+			cout << " (Assertion is enabled)" << endl;
+		cout << "       -  Data_Select (RW) : " << ReverseString(bit.substr(9, 4)) << endl;
+		cout << "       -  Data_Scale (RO) : " << ReverseString(bit.substr(13, 2)) << endl;
+		cout << "       -  No_Soft_Reset (RO) : " << bit.at(15);
+		if (bit.at(15) == '0')
+			cout << " (Has no effect.)" << endl;
+		if (bit.at(15) == '1')
+			cout << " (The field will be cleared, and the function will stop asserting a PME# signal (if enabled).)" << endl;
+		printf("    -  Reserved : 0x%02X\n", pci_power_management_interface_capability.reserved);
+		printf("    -  Data : 0x%02X\n\n", pci_power_management_interface_capability.data);
 	}
 }
