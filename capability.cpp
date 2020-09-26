@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <bitset>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
 
@@ -80,177 +81,29 @@ Type0ConfigurationSpaceHeader type_0_configuration_space_header = { 0, };
 Type1ConfigurationSpaceHeader type_1_configuration_space_header = { 0, };
 PciPowerManagementInterfaceCapability pci_power_management_interface_capability = { 0, };
 
+void CapabilityHighlight(const char* name, unsigned short offset) {
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(console, 112);
+	cout << "[+] [" << setfill('0') << setw(3) << right << uppercase << hex << offset << "] " << name << endl;
+	SetConsoleTextAttribute(console, 7);
+}
+
+void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned short size) {
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (expand)
+		cout << "   [+] " << name << " : ";
+	else
+		cout << "    -  " << name << " : ";
+	SetConsoleTextAttribute(console, 10);
+	cout << "0x" << setfill('0') << setw(size) << right << uppercase << hex << value << endl;
+	SetConsoleTextAttribute(console, 7);
+}
+
 string ReverseString(const string str) {
 	string reverse;
 	for (unsigned int index = 0; index < str.length(); index++)
 		reverse += str.substr(str.length() - index - 1, 1);
 	return reverse;
-}
-
-void PrintRegisters(int bus, int device, int function) {
-	DWORD data[2]; /* [0] : IO Port, [1] : Value */
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                 [00h] Type 0 Configuration Space Header               |" << endl;
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|              Device ID            |             Vendor ID             |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 0, &data);
-	printf("|                0x%04X             |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------|-----------------------------------|" << endl;
-	cout << "|               Status              |              Command              |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 1, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------|-----------------------------------|" << endl;
-	cout << "|             Class Code            |             Revision ID           |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 2, &data);
-	printf("|              0x%06X             |                0x%02X               |\n", data[1] >> 8, LOBYTE(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|    BIST    |   Header Type    |   Lantency Timer  |  Cache Line Size  |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 3, &data);
-	printf("|    0x%02X    |       0x%02X       |        0x%02X       |        0x%02X       |\n", HIBYTE(HIWORD(data[1])), LOBYTE(HIWORD(data[1])), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Base Address Register 0                       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 4, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Base Address Register 1                       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 5, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Base Address Register 2                       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 6, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Base Address Register 3                       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 7, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Base Address Register 4                       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 8, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Base Address Register 5                       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 9, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                           Cardbus CIS Pointer                         |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 10, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|            Subsystem ID           |         Subsystem Vendor ID       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 11, &data);
-	printf("|                0x%04X             |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                        Expansion ROM Base Address                     |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 12, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|              Reserved             |        Capabilities Pointer       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 13, &data);
-	printf("|              0x%06X             |                0x%02X               |\n", data[1] >> 8, LOBYTE(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                                Reserved                               |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 14, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|   Max Latency   |   Min Grant   |   Interrupt Pin  |  Interrupt Line  |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 15, &data);
-	printf("|       0x%02X      |      0x%02X     |        0x%02X      |       0x%02X       |\n", HIBYTE(HIWORD(data[1])), LOBYTE(HIWORD(data[1])), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                 [40h] PCI Power Management Capability                 |" << endl;
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|   Power Management Capabilities   | Next Item Pointer | Capability ID |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 16, &data);
-	printf("|               0x%04X              |        0x%02X       |      0x%02X     |\n", HIWORD(data[1]), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|         Data         |    Power Management Control/Status Register    |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 17, &data);
-	printf("|         0x%02X         |                    0x%06X                    |\n", HIBYTE(HIWORD(data[1])), LOWORD(data[1]) << 8 >> 8);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                          [50h] MSI Capability                         |" << endl;
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|          Message Control          | Next Item Pointer | Capability ID |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 20, &data);
-	printf("|               0x%04X              |        0x%02X       |      0x%02X     |\n", HIWORD(data[1]), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                          Message Lower Address                        |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 21, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                          Message Upper Address                        |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 22, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                                   |            Message Data           |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 23, &data);
-	printf("|                                   |               0x%04X              |\n", LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         [70h] MSI-X Capability                        |" << endl;
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|          Message Control          | Next Item Pointer | Capability ID |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 28, &data);
-	printf("|               0x%04X              |        0x%02X       |      0x%02X     |\n", HIWORD(data[1]), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                         Table Offset/Table BIR                        |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 29, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                           PBA Offset/PBA BIR                          |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 30, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                      [80h] PCI Express Capability                     |" << endl;
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "| PCI Express Capabilities Register | Next Item Pointer | Capability ID |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 32, &data);
-	printf("|               0x%04X              |        0x%02X       |      0x%02X     |\n", HIWORD(data[1]), HIBYTE(LOWORD(data[1])), LOBYTE(LOWORD(data[1])));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                      Device Capabilities Register                     |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 33, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|       Device Status Register      |      Device Control Register      |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 34, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                       Link Capabilities Register                      |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 35, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|        Link Status Register       |       Link Control Register       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 36, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                       Slot Capabilities Register                      |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 37, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|        Slot Status Register       |       Slot Control Register       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 38, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|     Root Capabilities Register    |       Root Control Register       |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 39, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                          Root Status Register                         |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 40, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                     Device Capabilities 2 Register                    |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 41, &data);
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|      Device Status 2 Register     |     Device Control 2 Register     |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 42, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|                      Link Capabilities 2 Register                     |" << endl;
-	printf("|                               0x%08X                              |\n", data[1]);
-	cout << "|-----------------------------------------------------------------------|" << endl;
-	cout << "|       Link Status 2 Register      |      Link Control 2 Register      |" << endl;
-	ReadPciDword(bus, device, function, sizeof(DWORD) * 44, &data);
-	printf("|               0x%04X              |               0x%04X              |\n", HIWORD(data[1]), LOWORD(data[1]));
-	cout << "|-----------------------------------------------------------------------|" << endl << endl;
 }
 
 void GetStandardCapabilities(int bus, int device, int function) {
@@ -323,6 +176,78 @@ BYTE GetNextItemPointer(int bus, int device, int function, BYTE offset) {
 	DWORD data[2]; /* [0] : IO Port, [1] : Value */
 	ReadPciDword(bus, device, function, offset + 0x00, &data);
 	return HIBYTE(LOWORD(data[1]));
+}
+
+string GetVendorName(WORD vendor_id) {
+	switch (vendor_id) {
+	case 0x1002:
+		return "ATI";
+	case 0x10DE:
+		return "NVIDIA";
+	case 0x1022:
+		return "AMD";
+	case 0x15AD:
+		return "VMWare";
+	case 0x8086:
+		return "Intel";
+	case 0x1C5C:
+		return "SK hynix";
+	case 0x144D:
+		return "Samsung";
+	case 0x5143:
+		return "Qualcomm";
+	case 0x13B5:
+		return "ARM";
+	case 0x1AEE:
+		return "Imagination Technologies";
+	default:
+		return "Unknown Vendor";
+	}
+}
+
+string GetDeviceType(DWORD class_code) {
+	switch (class_code >> 16) {
+	case 0x00:
+		return "Device was built before Class Code definitions were finalized";
+	case 0x01:
+		return "Mass Storage Controller";
+	case 0x02:
+		return "Network Controller";
+	case 0x03:
+		return "Display Controller";
+	case 0x04:
+		return "Multimedia Device";
+	case 0x05:
+		return "Memory Controller";
+	case 0x06:
+		return "Bridge Device";
+	case 0x07:
+		return "Simple Communication Controllers";
+	case 0x08:
+		return "Base System Peripherals";
+	case 0x09:
+		return "Input Devices";
+	case 0x0A:
+		return "Docking Stations";
+	case 0x0B:
+		return "Processors";
+	case 0x0C:
+		return "Serial Bus Controllers";
+	case 0x0D:
+		return "Wireless Controller";
+	case 0x0E:
+		return "Intelligent I/O Controllers";
+	case 0x0F:
+		return "Satellite Communication Controllers";
+	case 0x10:
+		return "Encryption/Decryption Controllers";
+	case 0x11:
+		return "Data Acquisition/Signal Processing Controller";
+	case 0xFF:
+		return "Device does not fit in any defined classes";
+	default:
+		return "Unknown Device Type";
+	}
 }
 
 void GetCommonConfigurationSpace(int bus, int device, int function) {
@@ -484,10 +409,10 @@ void PrintCapability(void) {
 void PrintType0ConfigurationSpaceHeader(void) {
 	string bit;
 	if (type_0_configuration_space_header.exists) {
-		printf("[+] [%03Xh] Type 0 Configuration Space Header\n", 0);
-		printf("    -  Vendor ID : 0x%04X\n", common_configuration_space.vendor_id);
-		printf("    -  Device ID : 0x%04X\n", common_configuration_space.device_id);
-		printf("   [+] Command : 0x%04X\n", common_configuration_space.command);
+		CapabilityHighlight("Type 0 Configuration Space Header", 0x00);
+		ValueHighlight(FALSE, "Vendor ID", common_configuration_space.vendor_id, 4);
+		ValueHighlight(FALSE, "Device ID", common_configuration_space.device_id, 4);
+		ValueHighlight(TRUE, "Command", common_configuration_space.command, 4);
 		bit = ReverseString(bitset<16>(common_configuration_space.command).to_string());
 		cout << "       -  I/O Space Enable (RW) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -513,7 +438,7 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		cout << "       -  Fast Back-to-Back Transactions Enable (RO) : " << bit.at(9) << endl;
 		cout << "       -  Interrupt Disable (RW) :" << bit.at(10) << endl;
 		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(11, 5)) << endl;
-		printf("   [+] Status : 0x%04X\n", common_configuration_space.status);
+		ValueHighlight(TRUE, "Status", common_configuration_space.status, 4);
 		bit = ReverseString(bitset<16>(common_configuration_space.status).to_string());
 		cout << "       -  Immediate Readiness (RO) : " << bit.at(0) << endl;
 		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 2)) << endl;
@@ -529,8 +454,8 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		cout << "       -  Received Master Abort (RW1C) : " << bit.at(13) << endl;
 		cout << "       -  Signaled System Error (RW1C) : " << bit.at(14) << endl;
 		cout << "       -  Detected Parity Error (RW1C) : " << bit.at(15) << endl;
-		printf("    -  Revision ID : 0x%02X\n", common_configuration_space.revision_id);
-		printf("   [+] Class Code : 0x%06X\n", common_configuration_space.class_code);
+		ValueHighlight(FALSE, "Revision ID", common_configuration_space.revision_id, 2);
+		ValueHighlight(TRUE, "Class Code", common_configuration_space.class_code, 6);
 		bit = ReverseString(bitset<24>(common_configuration_space.class_code).to_string());
 		cout << "       -  Programming Interface (RO) : " << ReverseString(bit.substr(0, 8)) << endl;
 		cout << "       -  Sub-Class Code (RO) : " << ReverseString(bit.substr(8, 8)) << endl;
@@ -573,9 +498,9 @@ void PrintType0ConfigurationSpaceHeader(void) {
 			cout << " (Data acquisition and signal processing controllers)" << endl;
 		if (stoi(ReverseString(bit.substr(16, 8)), 0, 2) == 0xFF)
 			cout << " (Device does not fit in any defined classes)" << endl;
-		printf("    -  Cache Line Size : 0x%02X\n", common_configuration_space.cache_line_size);
-		printf("    -  Lantency Timer : 0x%02X\n", common_configuration_space.latency_timer);
-		printf("   [+] Header Type : 0x%02X\n", common_configuration_space.header_type);
+		ValueHighlight(FALSE, "Cache Line Size", common_configuration_space.cache_line_size, 2);
+		ValueHighlight(FALSE, "Lantency Timer", common_configuration_space.latency_timer, 2);
+		ValueHighlight(TRUE, "Header Type", common_configuration_space.header_type, 2);
 		bit = ReverseString(bitset<8>(common_configuration_space.header_type).to_string());
 		cout << "       -  Header Layout (RO) : " << ReverseString(bit.substr(0, 7));
 		if (stoi(ReverseString(bit.substr(0, 7)), 0, 2) == 0x00)
@@ -587,7 +512,7 @@ void PrintType0ConfigurationSpaceHeader(void) {
 			cout << " (Device is single function)" << endl;
 		if (bit.at(7) == '1')
 			cout << " (Device has multiple functions)" << endl;
-		printf("   [+] BIST : 0x%02X\n", common_configuration_space.bist);
+		ValueHighlight(TRUE, "BIST", common_configuration_space.bist, 2);
 		bit = ReverseString(bitset<8>(common_configuration_space.bist).to_string());
 		cout << "       -  Completion Code (RO) : " << ReverseString(bit.substr(0, 4)) << endl;
 		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(4, 2)) << endl;
@@ -597,7 +522,7 @@ void PrintType0ConfigurationSpaceHeader(void) {
 			cout << " (Device is not BIST capable)" << endl;
 		if (bit.at(7) == '1')
 			cout << " (Device supports BIST)" << endl;
-		printf("   [+] Base Address Register 0 : 0x%08X\n", type_0_configuration_space_header.base_address_register[0]);
+		ValueHighlight(TRUE, "Base Address Register 0", type_0_configuration_space_header.base_address_register[0], 8);
 		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[0]).to_string());
 		cout << "       -  Space Indicator (RO) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -619,8 +544,8 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		if (bit.at(3) == '1')
 			cout << " (The data is prefetchable)" << endl;
 		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
-		printf("    -  Base Address Register 1 : 0x%08X\n", type_0_configuration_space_header.base_address_register[1]);
-		printf("   [+] Base Address Register 2 : 0x%08X\n", type_0_configuration_space_header.base_address_register[2]);
+		ValueHighlight(FALSE, "Base Address Register 1", type_0_configuration_space_header.base_address_register[1], 8);
+		ValueHighlight(TRUE, "Base Address Register 2", type_0_configuration_space_header.base_address_register[2], 8);
 		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[2]).to_string());
 		cout << "       -  Space Indicator (RO) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -642,7 +567,7 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		if (bit.at(3) == '1')
 			cout << " (The data is prefetchable)" << endl;
 		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
-		printf("   [+] Base Address Register 3 : 0x%08X\n", type_0_configuration_space_header.base_address_register[3]);
+		ValueHighlight(TRUE, "Base Address Register 3", type_0_configuration_space_header.base_address_register[3], 8);
 		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[3]).to_string());
 		cout << "       -  Space Indicator (RO) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -664,7 +589,7 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		if (bit.at(3) == '1')
 			cout << " (The data is prefetchable)" << endl;
 		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
-		printf("   [+] Base Address Register 4 : 0x%08X\n", type_0_configuration_space_header.base_address_register[4]);
+		ValueHighlight(TRUE, "Base Address Register 4", type_0_configuration_space_header.base_address_register[4], 8);
 		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[4]).to_string());
 		cout << "       -  Space Indicator (RO) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -686,7 +611,7 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		if (bit.at(3) == '1')
 			cout << " (The data is prefetchable)" << endl;
 		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
-		printf("   [+] Base Address Register 5 : 0x%08X\n", type_0_configuration_space_header.base_address_register[5]);
+		ValueHighlight(TRUE, "Base Address Register 5", type_0_configuration_space_header.base_address_register[5], 8);
 		bit = ReverseString(bitset<32>(type_0_configuration_space_header.base_address_register[5]).to_string());
 		cout << "       -  Space Indicator (RO) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -708,10 +633,10 @@ void PrintType0ConfigurationSpaceHeader(void) {
 		if (bit.at(3) == '1')
 			cout << " (The data is prefetchable)" << endl;
 		cout << "       -  Base Address (RW) : " << ReverseString(bit.substr(4, 28)) << endl;
-		printf("    -  Cardbus CIS Pointer : 0x%08X\n", type_0_configuration_space_header.cardbus_cis_pointer);
-		printf("    -  Subsystem Vendor ID : 0x%04X\n", type_0_configuration_space_header.subsystem_vendor_id);
-		printf("    -  Subsystem ID : 0x%04X\n", type_0_configuration_space_header.subsystem_id);
-		printf("   [+] Expansion ROM Base Address : 0x%08X\n", type_0_configuration_space_header.expansion_rom_base_address);
+		ValueHighlight(FALSE, "Cardbus CIS Pointer", type_0_configuration_space_header.cardbus_cis_pointer, 8);
+		ValueHighlight(FALSE, "Subsystem Vendor ID", type_0_configuration_space_header.subsystem_vendor_id, 4);
+		ValueHighlight(FALSE, "Subsystem ID", type_0_configuration_space_header.subsystem_id, 4);
+		ValueHighlight(TRUE, "Expansion ROM Base Address", type_0_configuration_space_header.expansion_rom_base_address, 8);
 		bit = ReverseString(bitset<32>(type_0_configuration_space_header.expansion_rom_base_address).to_string());
 		cout << "       -  Expansion ROM Enable (RW) : " << bit.at(0);
 		if (bit.at(0) == '0')
@@ -720,20 +645,20 @@ void PrintType0ConfigurationSpaceHeader(void) {
 			cout << " (Address decoding is enabled using the parameters in the other part of the base register)" << endl;
 		cout << "       -  Reserved (RSVD) : " << ReverseString(bit.substr(1, 10)) << endl;
 		cout << "       -  Expansion ROM Base Address (RW) : " << ReverseString(bit.substr(11, 21)) << endl;
-		printf("    -  Capabilities Pointer : 0x%02X\n", common_configuration_space.capabilities_pointer);
-		printf("    -  Reserved : 0x%06X\n", type_0_configuration_space_header.reserved1);
-		printf("    -  Reserved : 0x%08X\n", type_0_configuration_space_header.reserved2);
-		printf("    -  Interrupt Line : 0x%02X\n", common_configuration_space.interrupt_line);
-		printf("    -  Interrupt Pin : 0x%02X\n", common_configuration_space.interrupt_pin);
-		printf("    -  Min Grant : 0x%02X\n", type_0_configuration_space_header.min_grant);
-		printf("    -  Max Latency : 0x%02X\n\n", type_0_configuration_space_header.max_latency);
+		ValueHighlight(FALSE, "Capabilities Pointer", common_configuration_space.capabilities_pointer, 2);
+		ValueHighlight(FALSE, "Reserved", type_0_configuration_space_header.reserved1, 6);
+		ValueHighlight(FALSE, "Reserved", type_0_configuration_space_header.reserved2, 8);
+		ValueHighlight(FALSE, "Interrupt Line", common_configuration_space.interrupt_line, 2);
+		ValueHighlight(FALSE, "Interrupt Pin", common_configuration_space.interrupt_pin, 2);
+		ValueHighlight(FALSE, "Min Grant", type_0_configuration_space_header.min_grant, 2);
+		ValueHighlight(FALSE, "Max Latency", type_0_configuration_space_header.max_latency, 2);
 	}
 }
 
 void PrintType1ConfigurationSpaceHeader(void) {
 	string bit;
 	if (type_1_configuration_space_header.exists) {
-		printf("[+] [%03Xh] Type 1 Configuration Space Header\n", 0);
+		CapabilityHighlight("Type 1 Configuration Space Header", 0x00);
 		printf("    -  Vendor ID : 0x%04X\n", common_configuration_space.vendor_id);
 		printf("    -  Device ID : 0x%04X\n", common_configuration_space.device_id);
 		printf("   [+] Command : 0x%04X\n", common_configuration_space.command);
@@ -984,10 +909,10 @@ void PrintType1ConfigurationSpaceHeader(void) {
 void PrintPciPowerManagementInterfaceCapability(void) {
 	string bit;
 	if (pci_power_management_interface_capability.exists) {
-		printf("[+] [%03Xh] PCI Power Management Capability\n", pci_power_management_interface_capability.offset);
-		printf("    -  Capability ID : 0x%02X\n", pci_power_management_interface_capability.capability_id);
-		printf("    -  Next Capability Pointer : 0x%02X\n", pci_power_management_interface_capability.next_capability_pointer);
-		printf("   [+] Power Management Capabilities : 0x%04X\n", pci_power_management_interface_capability.power_management_capabilities);
+		CapabilityHighlight("PCI Power Management Capability", pci_power_management_interface_capability.offset);
+		ValueHighlight(FALSE, "Capability ID", pci_power_management_interface_capability.capability_id, 2);
+		ValueHighlight(FALSE, "Next Capability Pointer", pci_power_management_interface_capability.next_capability_pointer, 2);
+		ValueHighlight(TRUE, "Power Management Capabilities", pci_power_management_interface_capability.power_management_capabilities, 4);
 		bit = ReverseString(bitset<16>(pci_power_management_interface_capability.power_management_capabilities).to_string());
 		cout << "       -  Version (RO) : " << ReverseString(bit.substr(0, 3));
 		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x01)
@@ -1023,7 +948,7 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 		cout << "       -  D1_Support (RO) : " << bit.at(9) << endl;
 		cout << "       -  D2_Support (RO) : " << bit.at(10) << endl;
 		cout << "       -  PME_Support (RO) : " << ReverseString(bit.substr(11, 5)) << endl;
-		printf("   [+] Power Management Control/Status : 0x%04X\n", pci_power_management_interface_capability.power_management_control_status);
+		ValueHighlight(TRUE, "Power Management Control/Status", pci_power_management_interface_capability.power_management_control_status, 4);
 		bit = ReverseString(bitset<16>(pci_power_management_interface_capability.power_management_control_status).to_string());
 		cout << "       -  PowerState (RW) : " << ReverseString(bit.substr(0, 2));
 		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x00)
@@ -1053,7 +978,7 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			cout << " (Has no effect.)" << endl;
 		if (bit.at(15) == '1')
 			cout << " (The field will be cleared, and the function will stop asserting a PME# signal (if enabled).)" << endl;
-		printf("    -  Reserved : 0x%02X\n", pci_power_management_interface_capability.reserved);
-		printf("    -  Data : 0x%02X\n\n", pci_power_management_interface_capability.data);
+		ValueHighlight(FALSE, "Reserved", pci_power_management_interface_capability.reserved, 2);
+		ValueHighlight(FALSE, "Data", pci_power_management_interface_capability.data, 2);
 	}
 }

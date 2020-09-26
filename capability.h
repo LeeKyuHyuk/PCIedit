@@ -22,11 +22,13 @@
 #define CAPABILITY_ENHANCED_ALLOCATION 0x14
 #define CAPABILITY_FLATTENING_PORTAL_BRIDGE 0x15
 
+void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned short size);
 std::string ReverseString(const std::string str);
-void PrintRegisters(int bus, int device, int function);
 void GetStandardCapabilities(int bus, int device, int function);
 BYTE GetCapabilityID(int bus, int device, int function, BYTE offset);
 BYTE GetNextItemPointer(int bus, int device, int function, BYTE offset);
+std::string GetVendorName(WORD vendor_id);
+std::string GetDeviceType(DWORD class_code);
 void GetCommonConfigurationSpace(int bus, int device, int function);
 void GetType0ConfigurationSpaceHeader(int bus, int device, int function);
 void GetType1ConfigurationSpaceHeader(int bus, int device, int function);
