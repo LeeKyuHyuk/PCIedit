@@ -58,7 +58,6 @@ typedef struct Type1ConfigurationSpaceHeader {
 	DWORD prefetchable_memory_limit_upper;
 	WORD io_base_upper;
 	WORD io_limit_upper;
-
 	DWORD expansion_rom_base_address;
 	WORD bridge_control;
 } Type1ConfigurationSpaceHeader;

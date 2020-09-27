@@ -18,6 +18,13 @@ int main() {
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	string command = "";
 
+	/* Handler Initialization */
+	if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE) == FALSE) {
+		ErrorMessage(console, "Handler initialization failed!");
+		system("PAUSE");
+		return EXIT_FAILURE;
+	}
+
 	/* Extract RwDrv Driver */
 	ExtractResource(IDR_BINARY1, L"RwDrv.sys", L"BINARY");
 
@@ -61,10 +68,15 @@ int main() {
 			}
 			else if (strcmp(command.c_str(), "q") == 0 || strcmp(command.c_str(), "Q") == 0)
 				break;
-			else
+			else {
+				cin.clear();
+				cin.ignore();
 				ErrorMessage(console, "Invalid input.");
+			}
 		}
 		catch (...) {
+			cin.clear();
+			cin.ignore();
 			ErrorMessage(console, "Invalid input.");
 		}
 	}
@@ -185,4 +197,10 @@ BOOL ExtractResource(uint16_t resource_id, LPCWSTR output_filename, LPCWSTR reso
 	}
 	catch (...) {}
 	return false;
+}
+
+BOOL WINAPI ConsoleHandler(DWORD CEvent) {
+	if (CEvent == CTRL_CLOSE_EVENT)
+		UnloadPhyMemDriver();
+	return TRUE;
 }

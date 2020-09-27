@@ -17,3 +17,4 @@ void GetPciDevice(void);
 void SelectPciMessage(HANDLE console, PciDevice pci_device);
 void ErrorMessage(HANDLE console, std::string message);
 BOOL ExtractResource(uint16_t resource_id, LPCWSTR output_filename, LPCWSTR resource_type);
+BOOL WINAPI ConsoleHandler(DWORD CEvent);
