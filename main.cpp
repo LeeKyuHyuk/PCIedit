@@ -14,9 +14,11 @@ using namespace std;
 vector<PciDevice> pci_device_vector;
 
 int main() {
-	int select_pcie_device = -1;
+	unsigned short select_pcie_device = MAX_PCI_DEVICE_NUMBER;
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	string command = "";
+
+	Title();
 
 	/* Handler Initialization */
 	if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)ConsoleHandler, TRUE) == FALSE) {
@@ -37,9 +39,8 @@ int main() {
 	}
 
 	/* Select PCI Device (Input Bus, Device, Function) */
-	Title();
 	FindPciDevice();
-	GetPciDevice();
+	GetPciDevice(console);
 	do {
 		cout << ">> Select PCI Device : ";
 		cin >> select_pcie_device;
@@ -47,9 +48,9 @@ int main() {
 			cin.clear();
 			cin.ignore();
 			ErrorMessage(console, "Please select a valid PCI device!");
-			select_pcie_device = -1;
+			select_pcie_device = MAX_PCI_DEVICE_NUMBER;
 		}
-	} while (select_pcie_device < 0);
+	} while (select_pcie_device == MAX_PCI_DEVICE_NUMBER);
 	SelectPciMessage(console, pci_device_vector[select_pcie_device]);
 
 	/* PCIedit Colsone */
@@ -131,8 +132,10 @@ void FindPciDevice(void) {
 	}
 }
 
-void GetPciDevice(void) {
+void GetPciDevice(HANDLE console) {
+	SetConsoleTextAttribute(console, 112);
 	cout << "PCI Device List :" << endl;
+	SetConsoleTextAttribute(console, 7);
 	for (unsigned short index = 0; index < pci_device_vector.size(); index++) {
 		cout << "[" << setfill(' ') << setw(2) << dec << pci_device_vector[index].index << "] ";
 		cout << "Bus " << setfill('0') << setw(2) << right << uppercase << hex << pci_device_vector[index].bus << ", ";
