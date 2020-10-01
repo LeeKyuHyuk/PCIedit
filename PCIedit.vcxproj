@@ -147,11 +147,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="capabilities\configuration_space_header.cpp" />
+    <ClCompile Include="capabilities\pci_express.cpp" />
+    <ClCompile Include="capabilities\pci_power_management_interface.cpp" />
     <ClCompile Include="capability.cpp" />
     <ClCompile Include="pci.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="capabilities\configuration_space_header.h" />
+    <ClInclude Include="capabilities\pci_express.h" />
+    <ClInclude Include="capabilities\pci_power_management_interface.h" />
     <ClInclude Include="capability.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="pci.h" />

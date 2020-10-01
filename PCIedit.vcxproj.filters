@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\capabilities">
+      <UniqueIdentifier>{2af9b16a-c394-4af6-b9fb-d86b612dadd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\capabilities">
+      <UniqueIdentifier>{070bcf48-b78e-410a-bc88-07dde6d5a178}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pci.cpp">
@@ -23,6 +29,15 @@
     </ClCompile>
     <ClCompile Include="capability.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="capabilities\configuration_space_header.cpp">
+      <Filter>Source Files\capabilities</Filter>
+    </ClCompile>
+    <ClCompile Include="capabilities\pci_power_management_interface.cpp">
+      <Filter>Source Files\capabilities</Filter>
+    </ClCompile>
+    <ClCompile Include="capabilities\pci_express.cpp">
+      <Filter>Source Files\capabilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -37,6 +52,15 @@
     </ClInclude>
     <ClInclude Include="capability.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="capabilities\configuration_space_header.h">
+      <Filter>Header Files\capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="capabilities\pci_power_management_interface.h">
+      <Filter>Header Files\capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="capabilities\pci_express.h">
+      <Filter>Header Files\capabilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

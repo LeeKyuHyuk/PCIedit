@@ -14,7 +14,7 @@ using namespace std;
 vector<PciDevice> pci_device_vector;
 
 int main() {
-	unsigned short select_pcie_device = MAX_PCI_DEVICE_NUMBER;
+	unsigned int select_pcie_device = MAX_PCI_DEVICE_NUMBER;
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	string command = "";
 

@@ -22,18 +22,15 @@
 #define CAPABILITY_ENHANCED_ALLOCATION 0x14
 #define CAPABILITY_FLATTENING_PORTAL_BRIDGE 0x15
 
+void CapabilityHighlight(const char* name, unsigned short offset);
 void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned short size);
+void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, char value);
+void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, std::string value);
+void PrintRegisterDescription(const char* description);
 std::string ReverseString(const std::string str);
 void GetStandardCapabilities(int bus, int device, int function);
 BYTE GetCapabilityID(int bus, int device, int function, BYTE offset);
 BYTE GetNextItemPointer(int bus, int device, int function, BYTE offset);
 std::string GetVendorName(WORD vendor_id);
 std::string GetDeviceType(DWORD class_code);
-void GetCommonConfigurationSpace(int bus, int device, int function);
-void GetType0ConfigurationSpaceHeader(int bus, int device, int function);
-void GetType1ConfigurationSpaceHeader(int bus, int device, int function);
-void GetPciPowerManagementInterfaceCapability(int bus, int device, int function, BYTE offset);
 void PrintCapability(void);
-void PrintType0ConfigurationSpaceHeader(void);
-void PrintType1ConfigurationSpaceHeader(void);
-void PrintPciPowerManagementInterfaceCapability(void);
