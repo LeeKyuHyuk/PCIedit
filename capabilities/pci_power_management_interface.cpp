@@ -53,51 +53,74 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("Indicates that the function relies on the presence of the PCI clock for PME# operation");
 			break;
 		}
-		cout << "       -  Immediate_Readiness_on_Return_to_D0 (RO) : " << bit.at(4) << endl;
-		cout << "       -  Device Specific Initialization (RO) : " << bit.at(5) << endl;
-		cout << "       -  Aux_Current (RO) : " << ReverseString(bit.substr(6, 3));
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x00)
-			cout << " (0mA (self powered))" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x01)
-			cout << " (55mA)" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x02)
-			cout << " (100mA)" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x03)
-			cout << " (160mA)" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x04)
-			cout << " (220mA)" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x05)
-			cout << " (270mA)" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x06)
-			cout << " (320mA)" << endl;
-		if (stoi(ReverseString(bit.substr(6, 3)), 0, 2) == 0x07)
-			cout << " (375mA)" << endl;
-		cout << "       -  D1_Support (RO) : " << bit.at(9) << endl;
-		cout << "       -  D2_Support (RO) : " << bit.at(10) << endl;
-		cout << "       -  PME_Support (RO) : " << ReverseString(bit.substr(11, 5)) << endl;
+		PrintRegisterValue(TRUE, "Immediate_Readiness_on_Return_to_D0", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x10, 4));
+		PrintRegisterValue(TRUE, "Device Specific Initialization", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x20, 5));
+		PrintRegisterValue(FALSE, "Aux_Current", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1C0, 6));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1C0, 6)) {
+		case 0x00:
+			PrintRegisterDescription("0mA (self powered)");
+			break;
+		case 0x01:
+			PrintRegisterDescription("55mA");
+			break;
+		case 0x02:
+			PrintRegisterDescription("100mA");
+			break;
+		case 0x03:
+			PrintRegisterDescription("160mA");
+			break;
+		case 0x04:
+			PrintRegisterDescription("220mA");
+			break;
+		case 0x05:
+			PrintRegisterDescription("270mA");
+			break;
+		case 0x06:
+			PrintRegisterDescription("320mA");
+			break;
+		case 0x07:
+			PrintRegisterDescription("375mA");
+			break;
+		}
+		PrintRegisterValue(TRUE, "D1_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x200, 9));
+		PrintRegisterValue(TRUE, "D2_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x400, 10));
+		PrintRegisterValue(TRUE, "PME_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0xF800, 11));
 		ValueHighlight(TRUE, "Power Management Control/Status", pci_power_management_interface_capability.power_management_control_status, 4);
-		bit = ReverseString(bitset<16>(pci_power_management_interface_capability.power_management_control_status).to_string());
-		cout << "       -  PowerState (RW) : " << ReverseString(bit.substr(0, 2));
-		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x00)
-			cout << " (D0)" << endl;
-		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x01)
-			cout << " (D1)" << endl;
-		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x02)
-			cout << " (D2)" << endl;
-		if (stoi(ReverseString(bit.substr(0, 2)), 0, 2) == 0x03)
-			cout << " (D3_Hot)" << endl;
-		cout << "       -  Reserved (RSVDP) : " << bit.at(2) << endl;
-		cout << "       -  No_Soft_Reset (RO) : " << bit.at(3);
-		if (bit.at(3) == '0')
-			cout << " (Devices do perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.)" << endl;
-		if (bit.at(3) == '1')
-			cout << " (Devices do NOT perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.)" << endl;
-		cout << "       -  Reserved (RSVDP) : " << ReverseString(bit.substr(4, 4)) << endl;
-		cout << "       -  PME_En (RW) : " << bit.at(8);
-		if (bit.at(8) == '0')
-			cout << " (Assertion is disabled)" << endl;
-		if (bit.at(8) == '1')
-			cout << " (Assertion is enabled)" << endl;
+		PrintRegisterValue(FALSE, "PowerState", "RW", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x3, 0));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x3, 0)) {
+		case 0x00:
+			PrintRegisterDescription("D0");
+			break;
+		case 0x01:
+			PrintRegisterDescription("D1");
+			break;
+		case 0x02:
+			PrintRegisterDescription("D2");
+			break;
+		case 0x03:
+			PrintRegisterDescription("D3_Hot");
+			break;
+		}
+		PrintRegisterValue(TRUE, "Reserved", "RSVDP", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x4, 2));
+		PrintRegisterValue(FALSE, "No_Soft_Reset", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x8, 3));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x8, 3)) {
+		case 0x00:
+			PrintRegisterDescription("Devices do perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.");
+			break;
+		case 0x01:
+			PrintRegisterDescription("Devices do NOT perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.");
+			break;
+		}
+		PrintRegisterValue(TRUE, "Reserved", "RSVDP", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0xF0, 4));
+		PrintRegisterValue(TRUE, "PME_En", "RW", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x100, 8));
+		switch (pci_power_management_interface_capability.power_management_control_status, 0x100, 8) {
+		case 0x00:
+			PrintRegisterDescription("Assertion is disabled");
+			break;
+		case 0x01:
+			PrintRegisterDescription("Assertion is enabled");
+			break;
+		}
 		cout << "       -  Data_Select (RW) : " << ReverseString(bit.substr(9, 4)) << endl;
 		cout << "       -  Data_Scale (RO) : " << ReverseString(bit.substr(13, 2)) << endl;
 		cout << "       -  No_Soft_Reset (RO) : " << bit.at(15);
