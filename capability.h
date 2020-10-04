@@ -24,10 +24,9 @@
 
 void CapabilityHighlight(const char* name, unsigned short offset);
 void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned short size);
-void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, char value);
-void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, std::string value);
+unsigned short GetRegisterValue(unsigned long capability, unsigned long select, unsigned short shift);
+void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, unsigned short value);
 void PrintRegisterDescription(const char* description);
-std::string ReverseString(const std::string str);
 void GetStandardCapabilities(int bus, int device, int function);
 BYTE GetCapabilityID(int bus, int device, int function, BYTE offset);
 BYTE GetNextItemPointer(int bus, int device, int function, BYTE offset);

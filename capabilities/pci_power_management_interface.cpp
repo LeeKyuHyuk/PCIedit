@@ -27,25 +27,32 @@ void GetPciPowerManagementInterfaceCapability(int bus, int device, int function,
 }
 
 void PrintPciPowerManagementInterfaceCapability(void) {
-	string bit;
 	if (pci_power_management_interface_capability.exists) {
 		CapabilityHighlight("PCI Power Management Capability", pci_power_management_interface_capability.offset);
 		ValueHighlight(FALSE, "Capability ID", pci_power_management_interface_capability.capability_id, 2);
 		ValueHighlight(FALSE, "Next Capability Pointer", pci_power_management_interface_capability.next_capability_pointer, 2);
 		ValueHighlight(TRUE, "Power Management Capabilities", pci_power_management_interface_capability.power_management_capabilities, 4);
-		bit = ReverseString(bitset<16>(pci_power_management_interface_capability.power_management_capabilities).to_string());
-		cout << "       -  Version (RO) : " << ReverseString(bit.substr(0, 3));
-		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x01)
-			cout << " (PCI Power Management Interface Specification rev.1.0)" << endl;
-		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x02)
-			cout << " (PCI Power Management Interface Specification rev.1.1)" << endl;
-		if (stoi(ReverseString(bit.substr(0, 3)), 0, 2) == 0x03)
-			cout << " (PCI Power Management Interface Specification rev.1.2)" << endl;
-		cout << "       -  PME Clock (RO) : " << bit.at(3);
-		if (bit.at(3) == '0')
-			cout << " (Indicates that no PCI clock is required for the function to generate PME#)" << endl;
-		if (bit.at(3) == '1')
-			cout << " (Indicates that the function relies on the presence of the PCI clock for PME# operation)" << endl;
+		PrintRegisterValue(FALSE, "Version", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x7, 0));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x7, 0)) {
+		case 0x01:
+			PrintRegisterDescription("PCI Power Management Interface Specification rev.1.0");
+			break;
+		case 0x02:
+			PrintRegisterDescription("PCI Power Management Interface Specification rev.1.1");
+			break;
+		case 0x03:
+			PrintRegisterDescription("PCI Power Management Interface Specification rev.1.2");
+			break;
+		}
+		PrintRegisterValue(FALSE, "PME Clock", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x8, 3));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x8, 3)) {
+		case 0x00:
+			PrintRegisterDescription("Indicates that no PCI clock is required for the function to generate PME#");
+			break;
+		case 0x01:
+			PrintRegisterDescription("Indicates that the function relies on the presence of the PCI clock for PME# operation");
+			break;
+		}
 		cout << "       -  Immediate_Readiness_on_Return_to_D0 (RO) : " << bit.at(4) << endl;
 		cout << "       -  Device Specific Initialization (RO) : " << bit.at(5) << endl;
 		cout << "       -  Aux_Current (RO) : " << ReverseString(bit.substr(6, 3));

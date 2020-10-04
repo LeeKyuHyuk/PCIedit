@@ -35,13 +35,11 @@ void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned
 	SetConsoleTextAttribute(console, 7);
 }
 
-void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, char value) {
-	cout << "       -  " << name << " (" << attribute << ") : " << value;
-	if (newline)
-		cout << endl;
+unsigned short GetRegisterValue(unsigned long capability, unsigned long select, unsigned short shift) {
+	return (capability & select) >> shift;
 }
 
-void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, string value) {
+void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, unsigned short value) {
 	cout << "       -  " << name << " (" << attribute << ") : " << value;
 	if (newline)
 		cout << endl;
@@ -49,13 +47,6 @@ void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, s
 
 void PrintRegisterDescription(const char* description) {
 	cout << " (" << description << ")" << endl;
-}
-
-string ReverseString(const string str) {
-	string reverse;
-	for (unsigned int index = 0; index < str.length(); index++)
-		reverse += str.substr(str.length() - index - 1, 1);
-	return reverse;
 }
 
 void GetStandardCapabilities(int bus, int device, int function) {
