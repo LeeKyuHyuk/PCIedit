@@ -60,6 +60,7 @@ void GetPciExpressCapability(int bus, int device, int function, BYTE offset) {
 }
 
 void PrintPciExpressCapability(void) {
+	/*
 	string bit;
 	if (pci_express_capability.exists) {
 		CapabilityHighlight("PCI Express Capability", pci_express_capability.offset);
@@ -433,4 +434,5 @@ void PrintPciExpressCapability(void) {
 		ValueHighlight(FALSE, "Slot Control 2", pci_express_capability.slot_control_2, 4);
 		ValueHighlight(FALSE, "Slot Status 2", pci_express_capability.slot_status_2, 4);
 	}
+	*/
 }

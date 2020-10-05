@@ -44,8 +44,8 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("PCI Power Management Interface Specification rev.1.2");
 			break;
 		}
-		PrintRegisterValue(FALSE, "PME Clock", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x8, 3));
-		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x8, 3)) {
+		PrintRegisterValue(FALSE, "PME Clock", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1, 3));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1, 3)) {
 		case 0x00:
 			PrintRegisterDescription("Indicates that no PCI clock is required for the function to generate PME#");
 			break;
@@ -53,10 +53,10 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("Indicates that the function relies on the presence of the PCI clock for PME# operation");
 			break;
 		}
-		PrintRegisterValue(TRUE, "Immediate_Readiness_on_Return_to_D0", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x10, 4));
-		PrintRegisterValue(TRUE, "Device Specific Initialization", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x20, 5));
-		PrintRegisterValue(FALSE, "Aux_Current", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1C0, 6));
-		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1C0, 6)) {
+		PrintRegisterValue(TRUE, "Immediate_Readiness_on_Return_to_D0", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1, 4));
+		PrintRegisterValue(TRUE, "Device Specific Initialization", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1, 5));
+		PrintRegisterValue(FALSE, "Aux_Current", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x7, 6));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x7, 6)) {
 		case 0x00:
 			PrintRegisterDescription("0mA (self powered)");
 			break;
@@ -82,9 +82,9 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("375mA");
 			break;
 		}
-		PrintRegisterValue(TRUE, "D1_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x200, 9));
-		PrintRegisterValue(TRUE, "D2_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x400, 10));
-		PrintRegisterValue(TRUE, "PME_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0xF800, 11));
+		PrintRegisterValue(TRUE, "D1_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1, 9));
+		PrintRegisterValue(TRUE, "D2_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1, 10));
+		PrintRegisterValue(TRUE, "PME_Support", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_capabilities, 0x1F, 11));
 		ValueHighlight(TRUE, "Power Management Control/Status", pci_power_management_interface_capability.power_management_control_status, 4);
 		PrintRegisterValue(FALSE, "PowerState", "RW", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x3, 0));
 		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x3, 0)) {
@@ -101,9 +101,9 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("D3_Hot");
 			break;
 		}
-		PrintRegisterValue(TRUE, "Reserved", "RSVDP", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x4, 2));
-		PrintRegisterValue(FALSE, "No_Soft_Reset", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x8, 3));
-		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x8, 3)) {
+		PrintRegisterValue(TRUE, "Reserved", "RSVDP", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 2));
+		PrintRegisterValue(FALSE, "No_Soft_Reset", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 3));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 3)) {
 		case 0x00:
 			PrintRegisterDescription("Devices do perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.");
 			break;
@@ -111,9 +111,9 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("Devices do NOT perform an internal reset upon transitioning from D3hot to D0 via software control of the PowerState bits.");
 			break;
 		}
-		PrintRegisterValue(TRUE, "Reserved", "RSVDP", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0xF0, 4));
-		PrintRegisterValue(TRUE, "PME_En", "RW", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x100, 8));
-		switch (pci_power_management_interface_capability.power_management_control_status, 0x100, 8) {
+		PrintRegisterValue(TRUE, "Reserved", "RSVDP", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0xF, 4));
+		PrintRegisterValue(FALSE, "PME_En", "RW", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 8));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 8)) {
 		case 0x00:
 			PrintRegisterDescription("Assertion is disabled");
 			break;
@@ -121,13 +121,17 @@ void PrintPciPowerManagementInterfaceCapability(void) {
 			PrintRegisterDescription("Assertion is enabled");
 			break;
 		}
-		cout << "       -  Data_Select (RW) : " << ReverseString(bit.substr(9, 4)) << endl;
-		cout << "       -  Data_Scale (RO) : " << ReverseString(bit.substr(13, 2)) << endl;
-		cout << "       -  No_Soft_Reset (RO) : " << bit.at(15);
-		if (bit.at(15) == '0')
-			cout << " (Has no effect.)" << endl;
-		if (bit.at(15) == '1')
-			cout << " (The field will be cleared, and the function will stop asserting a PME# signal (if enabled).)" << endl;
+		PrintRegisterValue(TRUE, "Data_Select", "RW", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0xF, 9));
+		PrintRegisterValue(TRUE, "Data_Scale", "RO", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x3, 13));
+		PrintRegisterValue(FALSE, "PME_Status", "RW1C", GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 15));
+		switch (GetRegisterValue(pci_power_management_interface_capability.power_management_control_status, 0x1, 15)) {
+		case 0x00:
+			PrintRegisterDescription("Has no effect.");
+			break;
+		case 0x01:
+			PrintRegisterDescription("The field will be cleared, and the function will stop asserting a PME# signal (if enabled).");
+			break;
+		}
 		ValueHighlight(FALSE, "Reserved", pci_power_management_interface_capability.reserved, 2);
 		ValueHighlight(FALSE, "Data", pci_power_management_interface_capability.data, 2);
 	}

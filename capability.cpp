@@ -20,8 +20,9 @@ vector<BYTE> capability_order;
 void CapabilityHighlight(const char* name, unsigned short offset) {
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(console, 112);
-	cout << "[+] [" << setfill('0') << setw(3) << right << uppercase << hex << offset << "] " << name << endl;
+	cout << "[+] [" << setfill('0') << setw(3) << right << uppercase << hex << offset << "] " << name;
 	SetConsoleTextAttribute(console, 7);
+	cout << endl;
 }
 
 void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned short size) {
@@ -31,15 +32,17 @@ void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned
 	else
 		cout << "    -  " << name << " : ";
 	SetConsoleTextAttribute(console, 10);
-	cout << "0x" << setfill('0') << setw(size) << right << uppercase << hex << value << endl;
+	cout << "0x" << setfill('0') << setw(size) << right << uppercase << hex << value;
 	SetConsoleTextAttribute(console, 7);
+	cout << endl;
 }
 
-unsigned short GetRegisterValue(unsigned long capability, unsigned long select, unsigned short shift) {
+unsigned long GetRegisterValue(unsigned long capability, unsigned long select, unsigned short shift) {
+	select = select << shift;
 	return (capability & select) >> shift;
 }
 
-void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, unsigned short value) {
+void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, unsigned long value) {
 	cout << "       -  " << name << " (" << attribute << ") : " << value;
 	if (newline)
 		cout << endl;

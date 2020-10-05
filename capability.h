@@ -24,8 +24,8 @@
 
 void CapabilityHighlight(const char* name, unsigned short offset);
 void ValueHighlight(BOOL expand, const char* name, unsigned long value, unsigned short size);
-unsigned short GetRegisterValue(unsigned long capability, unsigned long select, unsigned short shift);
-void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, unsigned short value);
+unsigned long GetRegisterValue(unsigned long capability, unsigned long select, unsigned short shift);
+void PrintRegisterValue(BOOL newline, const char* name, const char* attribute, unsigned long value);
 void PrintRegisterDescription(const char* description);
 void GetStandardCapabilities(int bus, int device, int function);
 BYTE GetCapabilityID(int bus, int device, int function, BYTE offset);
