@@ -126,8 +126,12 @@ BYTE GetNextItemPointer(int bus, int device, int function, BYTE offset) {
 
 string GetVendorName(WORD vendor_id) {
 	switch (vendor_id) {
+	case 0x1000:
+		return "Broadcom (LSI)";
 	case 0x1002:
 		return "ATI";
+	case 0x10EC:
+		return "Realtek";
 	case 0x10DE:
 		return "NVIDIA";
 	case 0x1022:

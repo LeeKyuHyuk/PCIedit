@@ -123,7 +123,7 @@ void FindPciDevice(void) {
 				pci_device.device_id = HIWORD(data[1]);
 				ReadPciDword(bus, device, function, 0x08, &data);
 				pci_device.class_code = data[1] >> 8;
-				if (pci_device.vendor_id != 0x0000 && pci_device.device_id != 0x0000 && pci_device.vendor_id != 0xFFFF && pci_device.device_id != 0xFFFF) {
+				if (pci_device.vendor_id != 0x0000 && pci_device.device_id != 0x0000 && pci_device.vendor_id != 0xFFFF && pci_device.device_id != 0xFFFF && (pci_device.class_code >> 16) != 0xFF) {
 					pci_device_vector.push_back(pci_device);
 					index++;
 				}
