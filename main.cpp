@@ -134,8 +134,9 @@ void FindPciDevice(void) {
 
 void GetPciDevice(HANDLE console) {
 	SetConsoleTextAttribute(console, 112);
-	cout << "PCI Device List :" << endl;
+	cout << "PCI Device List :";
 	SetConsoleTextAttribute(console, 7);
+	cout << endl;
 	for (unsigned short index = 0; index < pci_device_vector.size(); index++) {
 		cout << "[" << setfill(' ') << setw(2) << dec << pci_device_vector[index].index << "] ";
 		cout << "Bus " << setfill('0') << setw(2) << right << uppercase << hex << pci_device_vector[index].bus << ", ";
